@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ChernobylZLauncher.CLI/ChernobylZLauncher.CLI.csproj" />
+  <Project Path="ChernobylZLauncher.Core/ChernobylZLauncher.Core.csproj" />
+</Solution>
