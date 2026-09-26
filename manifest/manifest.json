@@ -1,0 +1,11 @@
+{
+  "modpackVersion": "0.0.1-test",
+  "mods": [
+    {
+      "fileName": "dummy-mod.jar",
+      "downloadUrl": "https://raw.githubusercontent.com/github/gitignore/main/README.md",
+      "sha256": "b4777fe65003e4b43fd2ceaface229dce48e506bc0082b5356f14d3b72c5d16f",
+      "sizeBytes": 5847
+    }
+  ]
+}
