@@ -14,4 +14,11 @@ public class ModManifest
             PropertyNameCaseInsensitive = true
         }) ?? new ModManifest();
     }
+
+    public static async Task<ModManifest> FromUrlAsync(string url, HttpClient? httpClient = null, CancellationToken cancellationToken = default)
+    {
+        var client = httpClient ?? new HttpClient();
+        var json = await client.GetStringAsync(url, cancellationToken);
+        return FromJson(json);
+    }
 }

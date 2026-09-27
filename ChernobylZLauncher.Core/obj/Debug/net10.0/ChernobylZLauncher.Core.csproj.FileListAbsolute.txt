@@ -9,3 +9,4 @@ C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLaunche
 C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\obj\Debug\net10.0\refint\ChernobylZLauncher.Core.dll
 C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\obj\Debug\net10.0\ChernobylZLauncher.Core.pdb
 C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\obj\Debug\net10.0\ref\ChernobylZLauncher.Core.dll
+C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\obj\Debug\net10.0\ChernobylZLauncher.Core.sourcelink.json

@@ -24,9 +24,8 @@ class Program
 
         Console.WriteLine("\n📦 Chequeando mods...");
 
-        var manifestPath = Path.Combine(AppContext.BaseDirectory, "manifest.json");
-        var manifestJson = await File.ReadAllTextAsync(manifestPath);
-        var manifest = ModManifest.FromJson(manifestJson);
+       const string manifestUrl = "https://raw.githubusercontent.com/PapuBeto/ChernobylLauncher/main/manifest/manifest.json";
+       var manifest = await ModManifest.FromUrlAsync(manifestUrl);
 
         var modManager = new ModManagerService();
         var modsFolder = Path.Combine(AppContext.BaseDirectory, "mods");
