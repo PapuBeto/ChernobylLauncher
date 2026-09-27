@@ -6,12 +6,6 @@
       "downloadUrl": "https://raw.githubusercontent.com/github/gitignore/main/README.md",
       "sha256": "b4777fe65003e4b43fd2ceaface229dce48e506bc0082b5356f14d3b72c5d16f",
       "sizeBytes": 5847
-    },
-    {
-      "fileName": "dummy-mod-2.jar",
-      "downloadUrl": "https://raw.githubusercontent.com/octocat/Hello-World/master/README",
-      "sha256": "03ba204e50d126e4674c005e04d82e84c21366780af1f43bd54a37816b6ab340",
-      "sizeBytes": 13
     }
   ]
 }
