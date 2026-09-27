@@ -1,6 +1,7 @@
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using ChernobylZLauncher.Core.Logging;
 
 namespace ChernobylZLauncher.Core.Server;
 
@@ -19,19 +20,23 @@ public class ServerStatusService
     private readonly string _host;
     private readonly int _port;
     private readonly int _timeoutMs;
+    private readonly LauncherLogService? _log;
 
     private const int ProtocolVersion = 763;
 
-    public ServerStatusService(string host, int port = 25565, int timeoutMs = 5000)
+    public ServerStatusService(string host, int port = 25565, int timeoutMs = 5000, LauncherLogService? log = null)
     {
         _host = host;
         _port = port;
         _timeoutMs = timeoutMs;
+        _log = log;
     }
 
     public async Task<ServerStatusResult> CheckStatusAsync()
     {
         var result = new ServerStatusResult();
+
+        _log?.Info($"Conectando a {_host}:{_port}...");
 
         try
         {
@@ -44,6 +49,7 @@ public class ServerStatusService
             {
                 result.IsOnline = false;
                 result.ErrorMessage = "Timeout al conectar";
+                _log?.Warning($"Timeout al conectar con {_host}:{_port}");
                 return result;
             }
 
@@ -56,11 +62,13 @@ public class ServerStatusService
             ParseStatusJson(json, result);
 
             result.IsOnline = true;
+            _log?.Success($"Servidor online: {result.PlayersOnline}/{result.MaxPlayers} jugadores");
         }
         catch (Exception ex)
         {
             result.IsOnline = false;
             result.ErrorMessage = ex.Message;
+            _log?.Error($"Error al consultar el servidor: {ex.Message}");
         }
 
         return result;

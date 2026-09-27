@@ -1,33 +1,35 @@
 ﻿using ChernobylZLauncher.Core.Server;
 using ChernobylZLauncher.Core.Mods;
+using ChernobylZLauncher.Core.Logging;
 
 class Program
 {
     static async Task Main(string[] args)
     {
-        Console.WriteLine("☢️ Comprobando estado del servidor de ChernobylZ...");
+        var log = new LauncherLogService();
 
-        // Instanciamos nuestro servicio apuntando al dominio del server
-        var serverService = new ServerStatusService("chernobylz.refugenodes.com", 25836);
+        log.OnLogAdded += entry =>
+        {
+            var icon = entry.Level switch
+            {
+                LogLevel.Success => "🟢",
+                LogLevel.Warning => "🟡",
+                LogLevel.Error => "🔴",
+                _ => "ℹ️"
+            };
 
+            Console.WriteLine($"{icon} {entry.Message}");
+        };
+
+        Console.WriteLine("=== Estado del servidor ===");
+        var serverService = new ServerStatusService("chernobylz.refugenodes.com", 25836, log: log);
         var status = await serverService.CheckStatusAsync();
 
-        if (status.IsOnline)
-        {
-            Console.WriteLine("🟢 Servidor ONLINE");
-            Console.WriteLine($"👥 Jugadores: {status.PlayersOnline}/{status.MaxPlayers}");
-        }
-        else
-        {
-            Console.WriteLine("🔴 Servidor OFFLINE o inaccesible.");
-        }
+        Console.WriteLine("\n=== Mods ===");
+        const string manifestUrl = "https://raw.githubusercontent.com/PapuBeto/ChernobylLauncher/main/manifest/manifest.json";
+        var manifest = await ModManifest.FromUrlAsync(manifestUrl);
 
-        Console.WriteLine("\n📦 Chequeando mods...");
-
-       const string manifestUrl = "https://raw.githubusercontent.com/PapuBeto/ChernobylLauncher/main/manifest/manifest.json";
-       var manifest = await ModManifest.FromUrlAsync(manifestUrl);
-
-        var modManager = new ModManagerService();
+        var modManager = new ModManagerService(log: log);
         var modsFolder = Path.Combine(AppContext.BaseDirectory, "mods");
 
         var checkResults = modManager.CheckMods(modsFolder, manifest);
@@ -36,13 +38,11 @@ class Program
             Console.WriteLine($"  {result.FileName}: {result.Status}");
         }
 
-        Console.WriteLine("\n⬇️ Sincronizando mods faltantes...");
-
         var progress = new Progress<(string FileName, double Percent)>(p =>
             Console.WriteLine($"  {p.FileName}: {p.Percent:F0}%"));
 
         await modManager.SyncModsAsync(modsFolder, manifest, progress);
 
-        Console.WriteLine("\n✅ ¡Listo!");
+        Console.WriteLine("\n✅ Listo");
     }
 }

@@ -1,12 +1,12 @@
+C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\bin\Debug\net10.0\ChernobylZLauncher.Core.deps.json
+C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\bin\Debug\net10.0\ChernobylZLauncher.Core.dll
+C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\bin\Debug\net10.0\ChernobylZLauncher.Core.pdb
 C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\obj\Debug\net10.0\ChernobylZLauncher.Core.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\obj\Debug\net10.0\ChernobylZLauncher.Core.AssemblyInfoInputs.cache
 C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\obj\Debug\net10.0\ChernobylZLauncher.Core.AssemblyInfo.cs
 C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\obj\Debug\net10.0\ChernobylZLauncher.Core.csproj.CoreCompileInputs.cache
-C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\bin\Debug\net10.0\ChernobylZLauncher.Core.deps.json
-C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\bin\Debug\net10.0\ChernobylZLauncher.Core.dll
-C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\bin\Debug\net10.0\ChernobylZLauncher.Core.pdb
+C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\obj\Debug\net10.0\ChernobylZLauncher.Core.sourcelink.json
 C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\obj\Debug\net10.0\ChernobylZLauncher.Core.dll
 C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\obj\Debug\net10.0\refint\ChernobylZLauncher.Core.dll
 C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\obj\Debug\net10.0\ChernobylZLauncher.Core.pdb
 C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\obj\Debug\net10.0\ref\ChernobylZLauncher.Core.dll
-C:\Users\Rober\OneDrive\Documentos\proyectos\ChernobylLauncher\ChernobylZLauncher.Core\obj\Debug\net10.0\ChernobylZLauncher.Core.sourcelink.json

@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using ChernobylZLauncher.Core.Logging;
 
 namespace ChernobylZLauncher.Core.Mods;
 
@@ -19,10 +20,12 @@ public class ModCheckResult
 public class ModManagerService
 {
     private readonly HttpClient _httpClient;
+    private readonly LauncherLogService? _log;
 
-    public ModManagerService(HttpClient? httpClient = null)
+    public ModManagerService(HttpClient? httpClient = null, LauncherLogService? log = null)
     {
         _httpClient = httpClient ?? new HttpClient();
+        _log = log;
     }
 
     public List<ModCheckResult> CheckMods(string modsFolder, ModManifest manifest)
@@ -43,22 +46,25 @@ public class ModManagerService
             if (!File.Exists(localPath))
             {
                 results.Add(new ModCheckResult { FileName = mod.FileName, Status = ModStatus.Missing });
+                _log?.Warning($"Falta el mod: {mod.FileName}");
                 continue;
             }
 
             var localHash = ComputeSha256(localPath);
-            results.Add(new ModCheckResult
+            var status = string.Equals(localHash, mod.Sha256, StringComparison.OrdinalIgnoreCase)
+                ? ModStatus.Ok
+                : ModStatus.HashMismatch;
+
+            results.Add(new ModCheckResult { FileName = mod.FileName, Status = status });
+
+            if (status == ModStatus.HashMismatch)
             {
-                FileName = mod.FileName,
-                Status = string.Equals(localHash, mod.Sha256, StringComparison.OrdinalIgnoreCase)
-                    ? ModStatus.Ok
-                    : ModStatus.HashMismatch
-            });
+                _log?.Warning($"Hash no coincide: {mod.FileName}");
+            }
 
             localFiles.Remove(mod.FileName);
         }
 
-        // lo que queda aca es lo que sobra en la carpeta y no deberia estar
         foreach (var extra in localFiles)
         {
             results.Add(new ModCheckResult { FileName = extra, Status = ModStatus.Extra });
@@ -76,6 +82,8 @@ public class ModManagerService
         Directory.CreateDirectory(modsFolder);
         var destinationPath = Path.Combine(modsFolder, mod.FileName);
         var tempPath = destinationPath + ".tmp";
+
+        _log?.Info($"Descargando {mod.FileName}...");
 
         using (var response = await _httpClient.GetAsync(
             mod.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken))
@@ -102,11 +110,11 @@ public class ModManagerService
             }
         }
 
-        // chequeamos el hash antes de dejarlo como definitivo, por si la descarga vino corrupta
         var downloadedHash = ComputeSha256(tempPath);
         if (!string.Equals(downloadedHash, mod.Sha256, StringComparison.OrdinalIgnoreCase))
         {
             File.Delete(tempPath);
+            _log?.Error($"Descarga corrupta: {mod.FileName}");
             throw new InvalidOperationException(
                 $"El hash de '{mod.FileName}' no coincide con el esperado. Descarga corrupta o manifiesto desactualizado.");
         }
@@ -117,6 +125,7 @@ public class ModManagerService
         }
 
         File.Move(tempPath, destinationPath);
+        _log?.Success($"{mod.FileName} descargado correctamente");
     }
 
     public async Task SyncModsAsync(
@@ -130,6 +139,12 @@ public class ModManagerService
             .Where(r => r.Status is ModStatus.Missing or ModStatus.HashMismatch)
             .Select(r => manifest.Mods.First(m => m.FileName == r.FileName))
             .ToList();
+
+        if (toDownload.Count == 0)
+        {
+            _log?.Info("Todos los mods están al día");
+            return;
+        }
 
         foreach (var mod in toDownload)
         {
