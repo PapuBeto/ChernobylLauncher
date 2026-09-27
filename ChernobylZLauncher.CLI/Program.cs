@@ -26,7 +26,7 @@ class Program
         var status = await serverService.CheckStatusAsync();
 
         Console.WriteLine("\n=== Mods ===");
-        const string manifestUrl = "https://raw.githubusercontent.com/PapuBeto/ChernobylLauncher/main/manifest/manifest.json";
+        var manifestUrl = $"https://raw.githubusercontent.com/PapuBeto/ChernobylLauncher/main/manifest/manifest.json?cachebust={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
         var manifest = await ModManifest.FromUrlAsync(manifestUrl);
 
         var modManager = new ModManagerService(log: log);
