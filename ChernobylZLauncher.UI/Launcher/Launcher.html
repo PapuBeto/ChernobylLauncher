@@ -1,0 +1,1811 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Chernobyl Z — Launcher</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --background: #0d0f10;
+      --surface: #121516;
+      --surface-2: #171b1c;
+      --surface-3: #1b2021;
+
+      --green: #9cff42;
+      --green-dark: #76d52a;
+
+      --text: #eef1ec;
+      --text-soft: #b8beb8;
+      --muted: #737c75;
+
+      --border: rgba(220, 235, 220, .085);
+      --border-hover: rgba(156, 255, 66, .22);
+
+      --mono: "Space Mono", monospace;
+      --main: "Space Grotesk", sans-serif;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      overflow: hidden;
+      background: var(--background);
+      color: var(--text);
+      font-family: var(--main);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    a {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+    }
+
+    /* =========================================================
+           APP
+        ========================================================= */
+
+    .app {
+      width: 100%;
+      height: 100vh;
+      display: grid;
+      grid-template-rows: 58px 1fr 42px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: .28;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, .018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .018) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    /* =========================================================
+           HEADER
+        ========================================================= */
+
+    header {
+      position: relative;
+      z-index: 20;
+
+      display: flex;
+      align-items: center;
+
+      padding: 0 26px;
+
+      border-bottom: 1px solid var(--border);
+      background: rgba(13, 15, 16, .92);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 205px;
+    }
+
+    .brand-symbol {
+      color: var(--green);
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .brand-name {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .17em;
+    }
+
+    .brand-version {
+      margin-left: 2px;
+      padding: 3px 6px;
+
+      border: 1px solid var(--border);
+
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 7px;
+      letter-spacing: .08em;
+    }
+
+    /* =========================================================
+           SOCIAL
+        ========================================================= */
+
+    .socials {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .social {
+      height: 32px;
+      padding: 0 10px;
+
+      display: flex;
+      align-items: center;
+      gap: 7px;
+
+      color: var(--muted);
+      text-decoration: none;
+
+      border: 1px solid transparent;
+
+      transition:
+        color .15s ease,
+        background .15s ease,
+        border-color .15s ease;
+    }
+
+    .social svg {
+      width: 13px;
+      height: 13px;
+      fill: currentColor;
+    }
+
+    .social span {
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: .06em;
+    }
+
+    .social:hover {
+      color: var(--text);
+      background: var(--surface-2);
+      border-color: var(--border);
+    }
+
+    .social.store {
+      color: var(--green);
+    }
+
+    .social.store:hover {
+      background: rgba(156, 255, 66, .055);
+      border-color: var(--border-hover);
+    }
+
+    /* =========================================================
+           SERVER STATUS
+        ========================================================= */
+
+    .server-status {
+      margin-left: auto;
+      margin-right: 24px;
+
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--muted);
+    }
+
+    .server-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px rgba(156, 255, 66, .5);
+    }
+
+    .server-status strong {
+      color: var(--text-soft);
+      font-weight: 400;
+    }
+
+    /* =========================================================
+           PROFILE
+        ========================================================= */
+
+    .profile {
+      position: relative;
+    }
+
+    .profile-button {
+      height: 40px;
+      padding-left: 17px;
+
+      display: flex;
+      align-items: center;
+      gap: 9px;
+
+      color: var(--text);
+      background: transparent;
+
+      border-left: 1px solid var(--border);
+
+      cursor: pointer;
+    }
+
+    .profile-button:hover .profile-name {
+      color: var(--green);
+    }
+
+    .avatar {
+      width: 27px;
+      height: 27px;
+      image-rendering: pixelated;
+    }
+
+    .profile-info {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+    }
+
+    .profile-name {
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 600;
+      transition: color .15s;
+    }
+
+    .profile-label {
+      margin-top: 2px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 7px;
+    }
+
+    .profile-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 7px);
+
+      width: 185px;
+
+      display: none;
+      flex-direction: column;
+
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+
+      box-shadow: 0 18px 50px rgba(0, 0, 0, .4);
+    }
+
+    .profile-menu.open {
+      display: flex;
+    }
+
+    .profile-option {
+      padding: 12px 14px;
+
+      color: var(--text-soft);
+      font-size: 11px;
+
+      cursor: pointer;
+
+      transition:
+        background .15s,
+        color .15s;
+    }
+
+    .profile-option:hover {
+      color: var(--text);
+      background: var(--surface-3);
+    }
+
+    .profile-option.separator {
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    /* =========================================================
+           MAIN
+        ========================================================= */
+
+    main {
+      min-height: 0;
+
+      display: grid;
+      grid-template-columns: 250px 1fr;
+
+      position: relative;
+      z-index: 1;
+    }
+
+    /* =========================================================
+           NEWS
+        ========================================================= */
+
+    .news {
+      min-height: 0;
+      overflow-y: auto;
+
+      padding: 28px 20px;
+
+      border-right: 1px solid var(--border);
+
+      background:
+        linear-gradient(180deg,
+          rgba(156, 255, 66, .018),
+          transparent 35%);
+    }
+
+    .news::-webkit-scrollbar {
+      width: 0;
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+
+      margin-bottom: 18px;
+
+      color: var(--muted);
+
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: .16em;
+    }
+
+    .section-label::before {
+      content: "";
+      width: 14px;
+      height: 1px;
+      background: var(--green);
+      opacity: .7;
+    }
+
+    .news-item {
+      padding: 15px 0;
+
+      border-bottom: 1px solid var(--border);
+
+      cursor: pointer;
+
+      transition:
+        border-color .15s,
+        transform .15s;
+    }
+
+    .news-item:hover {
+      transform: translateX(2px);
+      border-color: rgba(156, 255, 66, .2);
+    }
+
+    .news-item.featured {
+      padding-top: 0;
+    }
+
+    .news-image {
+      width: 100%;
+      height: 105px;
+
+      margin-bottom: 12px;
+
+      position: relative;
+      overflow: hidden;
+
+      border: 1px solid var(--border);
+
+      background:
+        radial-gradient(circle at 75% 40%,
+          rgba(156, 255, 66, .22),
+          transparent 25%),
+        linear-gradient(135deg,
+          #172018,
+          #0e1211);
+    }
+
+    .news-image::before {
+      content: "CHERNOBYL Z // ZONE 04";
+
+      position: absolute;
+      top: 10px;
+      left: 10px;
+
+      color: rgba(238, 241, 236, .45);
+
+      font-family: var(--mono);
+      font-size: 7px;
+      letter-spacing: .12em;
+    }
+
+    .news-image::after {
+      content: "☢";
+
+      position: absolute;
+      right: 8px;
+      bottom: -20px;
+
+      color: rgba(156, 255, 66, .1);
+      font-size: 100px;
+      line-height: 1;
+    }
+
+    .news-meta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+
+      margin-bottom: 6px;
+    }
+
+    .news-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .news-dot.fix {
+      background: #d96a4d;
+    }
+
+    .news-dot.server {
+      background: var(--muted);
+    }
+
+    .news-date {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 8px;
+    }
+
+    .news-tag {
+      margin-left: auto;
+
+      color: var(--green);
+
+      font-family: var(--mono);
+      font-size: 7px;
+      letter-spacing: .08em;
+    }
+
+    .news-title {
+      color: var(--text-soft);
+      font-size: 12px;
+      line-height: 1.45;
+      font-weight: 500;
+    }
+
+    .featured .news-title {
+      color: var(--text);
+    }
+
+    /* =========================================================
+           HERO
+        ========================================================= */
+
+    .hero {
+      min-width: 0;
+      position: relative;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      padding: 40px;
+    }
+
+    .hero::before {
+      content: "01";
+
+      position: absolute;
+      top: 30px;
+      right: 35px;
+
+      color: rgba(156, 255, 66, .15);
+
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: .2em;
+    }
+
+    .hero::after {
+      content: "";
+
+      position: absolute;
+      width: 460px;
+      height: 460px;
+
+      border: 1px solid rgba(156, 255, 66, .035);
+      border-radius: 50%;
+
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      margin-bottom: 14px;
+
+      color: var(--muted);
+
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: .2em;
+    }
+
+    .eyebrow span {
+      color: var(--green);
+    }
+    
+
+    .title {
+      position: relative;
+      color: var(--text);
+      font-size: clamp(58px, 7vw, 88px);
+      font-weight: 700;
+      line-height: .9;
+      letter-spacing: -.055em;
+
+      /* Hace que el título sea protagonista */
+      text-shadow:
+        0 0 35px rgba(156, 255, 66, .055),
+        0 0 80px rgba(156, 255, 66, .025);
+
+      transition:
+        transform .25s ease,
+        text-shadow .25s ease;
+    }
+
+    .title:hover {
+      transform: scale(1.015);
+      text-shadow:
+        0 0 35px rgba(156, 255, 66, .12),
+        0 0 90px rgba(156, 255, 66, .055);
+    }
+
+    .title span {
+      position: relative;
+      color: var(--green);
+
+      text-shadow:
+        0 0 12px rgba(156, 255, 66, .3),
+        0 0 35px rgba(156, 255, 66, .12);
+    }
+
+    /* Pequeño detalle radioactivo detrás de la Z */
+    .title span::after {
+      content: "☢";
+      position: absolute;
+      z-index: -1;
+
+      right: -32px;
+      top: 50%;
+      transform: translateY(-50%);
+
+      font-size: 42px;
+      color: rgba(156, 255, 66, .055);
+
+      filter: blur(.2px);
+
+      transition:
+        opacity .25s ease,
+        transform .25s ease;
+    }
+
+    .title:hover span::after {
+      opacity: .9;
+      transform: translateY(-50%) rotate(8deg);
+    }
+
+    .subtitle {
+      margin-top: 14px;
+
+      color: var(--muted);
+
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: .28em;
+    }
+
+    /* =========================================================
+           PLAY
+        ========================================================= */
+
+    .play-section {
+      margin-top: 52px;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .launch-label {
+      align-self: flex-start;
+
+      margin-bottom: 8px;
+
+      color: var(--muted);
+
+      font-family: var(--mono);
+      font-size: 7px;
+      letter-spacing: .14em;
+    }
+
+    .launch-controls {
+      display: flex;
+      gap: 1px;
+    }
+
+    .play-button {
+      height: 56px;
+      min-width: 205px;
+
+      padding: 0 38px;
+
+      background: var(--green);
+      color: #0d100c;
+
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: .18em;
+
+      cursor: pointer;
+
+      transition:
+        background .15s,
+        transform .12s,
+        box-shadow .15s;
+    }
+
+    .play-button:hover {
+      background: #b1ff68;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px rgba(156, 255, 66, .1);
+    }
+
+    .play-button:active {
+      transform: translateY(0);
+    }
+
+    .play-button:disabled {
+      cursor: default;
+      opacity: .55;
+    }
+
+    /* =========================================================
+           VERSION
+        ========================================================= */
+
+    .version {
+      position: relative;
+    }
+
+    .version-button {
+      width: 120px;
+      height: 56px;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+
+      color: var(--text);
+
+      cursor: pointer;
+    }
+
+    .version-button:hover {
+      background: var(--surface-3);
+    }
+
+    .version-label {
+      color: var(--muted);
+
+      font-family: var(--mono);
+      font-size: 6px;
+      letter-spacing: .14em;
+    }
+
+    .version-current {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .06em;
+    }
+
+    .version-arrow {
+      color: var(--muted);
+      font-size: 8px;
+
+      transition: transform .15s;
+    }
+
+    .version-arrow.open {
+      transform: rotate(180deg);
+    }
+
+    .version-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 4px);
+
+      width: 190px;
+
+      display: none;
+      flex-direction: column;
+
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+
+      box-shadow: 0 18px 50px rgba(0, 0, 0, .4);
+    }
+
+    .version-menu.open {
+      display: flex;
+    }
+
+    .version-option {
+      padding: 13px 14px;
+
+      border-bottom: 1px solid var(--border);
+
+      cursor: pointer;
+    }
+
+    .version-option:last-child {
+      border-bottom: 0;
+    }
+
+    .version-option:hover {
+      background: var(--surface-3);
+    }
+
+    .version-option.active .option-name {
+      color: var(--green);
+    }
+
+    .option-name {
+      display: block;
+
+      color: var(--text);
+
+      font-family: var(--mono);
+      font-size: 10px;
+    }
+
+    .option-description {
+      display: block;
+
+      margin-top: 4px;
+
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    /* =========================================================
+           BUILD INFO
+        ========================================================= */
+
+    .build-info {
+      display: flex;
+      align-items: center;
+
+      margin-top: 13px;
+
+      color: var(--muted);
+
+      font-family: var(--mono);
+      font-size: 8px;
+    }
+
+    .build-info span {
+      padding: 0 12px;
+    }
+
+    .build-info span+span {
+      border-left: 1px solid var(--border);
+    }
+
+    /* =========================================================
+           FOOTER
+        ========================================================= */
+
+    footer {
+      position: relative;
+      z-index: 10;
+
+      display: flex;
+      align-items: center;
+      gap: 13px;
+
+      padding: 0 26px;
+
+      border-top: 1px solid var(--border);
+
+      background: var(--background);
+    }
+
+    .footer-status {
+      min-width: 130px;
+
+      color: var(--muted);
+
+      font-family: var(--mono);
+      font-size: 8px;
+    }
+
+    .progress {
+      flex: 1;
+      height: 2px;
+
+      overflow: hidden;
+
+      background: rgba(255, 255, 255, .05);
+    }
+
+    .progress-fill {
+      width: 100%;
+      height: 100%;
+
+      background: var(--green);
+
+      transition: width .3s ease;
+    }
+
+    .percentage {
+      min-width: 30px;
+
+      color: var(--green);
+
+      font-family: var(--mono);
+      font-size: 8px;
+      text-align: right;
+    }
+
+    .launcher-version {
+      color: rgba(255, 255, 255, .22);
+
+      font-family: var(--mono);
+      font-size: 8px;
+    }
+
+    /* =========================================================
+           CHANGELOG MODAL
+        ========================================================= */
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 25px;
+
+      background: rgba(4, 5, 5, .78);
+      backdrop-filter: blur(9px);
+
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+
+      transition:
+        opacity .18s ease,
+        visibility .18s ease;
+    }
+
+    .overlay.open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .modal {
+      width: min(760px, 94vw);
+      min-height: 390px;
+
+      display: grid;
+      grid-template-columns: 43% 57%;
+
+      overflow: hidden;
+
+      background: #121617;
+      border: 1px solid var(--border);
+
+      box-shadow: 0 30px 100px rgba(0, 0, 0, .55);
+
+      transform: translateY(10px);
+      transition: transform .2s ease;
+    }
+
+    .overlay.open .modal {
+      transform: translateY(0);
+    }
+
+    .modal-image {
+      position: relative;
+
+      background:
+        radial-gradient(circle at 65% 42%,
+          rgba(156, 255, 66, .2),
+          transparent 28%),
+        linear-gradient(145deg,
+          #172019,
+          #0d1110);
+    }
+
+    .modal-image::before {
+      content: "CHERNOBYL Z";
+
+      position: absolute;
+      top: 22px;
+      left: 22px;
+
+      color: rgba(255, 255, 255, .5);
+
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: .14em;
+    }
+
+    .modal-image::after {
+      content: "☢";
+
+      position: absolute;
+      right: 20px;
+      bottom: -35px;
+
+      color: rgba(156, 255, 66, .1);
+
+      font-size: 190px;
+      line-height: 1;
+    }
+
+    .modal-content {
+      padding: 48px;
+
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .modal-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      margin-bottom: 17px;
+
+      color: var(--muted);
+
+      font-family: var(--mono);
+      font-size: 7px;
+      letter-spacing: .12em;
+    }
+
+    .modal-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .modal-dot.fix {
+      background: #d96a4d;
+    }
+
+    .modal-dot.server {
+      background: var(--muted);
+    }
+
+    .modal-title {
+      margin-bottom: 16px;
+
+      color: var(--text);
+
+      font-size: 28px;
+      line-height: 1.1;
+      font-weight: 600;
+      letter-spacing: -.025em;
+    }
+
+    .modal-description {
+      color: var(--text-soft);
+
+      font-size: 13px;
+      line-height: 1.7;
+
+      opacity: .82;
+    }
+
+    .modal-footer {
+      margin-top: 30px;
+      padding-top: 13px;
+
+      border-top: 1px solid var(--border);
+
+      color: var(--muted);
+
+      font-family: var(--mono);
+      font-size: 7px;
+      letter-spacing: .1em;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 13px;
+      right: 13px;
+
+      width: 30px;
+      height: 30px;
+
+      background: rgba(0, 0, 0, .3);
+      border: 1px solid var(--border);
+
+      color: var(--muted);
+
+      font-size: 19px;
+      font-weight: 300;
+
+      cursor: pointer;
+
+      z-index: 2;
+    }
+
+    .modal-close:hover {
+      color: var(--text);
+      border-color: var(--border-hover);
+    }
+
+    /* =========================================================
+           RESPONSIVE
+        ========================================================= */
+
+    @media (max-width: 950px) {
+      .brand {
+        min-width: auto;
+      }
+
+      .brand-version {
+        display: none;
+      }
+
+      .social span {
+        display: none;
+      }
+
+      .social {
+        width: 32px;
+        padding: 0;
+        justify-content: center;
+      }
+
+      .server-status {
+        margin-right: 14px;
+      }
+
+      main {
+        grid-template-columns: 210px 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .app {
+        grid-template-rows: 55px 1fr 40px;
+      }
+
+      header {
+        padding: 0 15px;
+      }
+
+      .socials {
+        display: none;
+      }
+
+      .server-status {
+        margin-left: auto;
+      }
+
+      .profile-info {
+        display: none;
+      }
+
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .news {
+        display: none;
+      }
+
+      .hero {
+        padding: 25px;
+      }
+
+      .title {
+        font-size: 52px;
+      }
+
+      .play-section {
+        margin-top: 42px;
+      }
+
+      .play-button {
+        min-width: 165px;
+        padding: 0 24px;
+      }
+
+      .version-button {
+        width: 105px;
+      }
+
+      .modal {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-image {
+        min-height: 175px;
+      }
+
+      .modal-content {
+        padding: 30px;
+      }
+
+      footer {
+        padding: 0 15px;
+      }
+
+      .launcher-version {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app">
+
+    <!-- HEADER -->
+
+    <header>
+
+      <div class="brand">
+        <span class="brand-symbol">☢</span>
+        <span class="brand-name">CHERNOBYL Z</span>
+        <span class="brand-version">1.4.2</span>
+      </div>
+
+      <nav class="socials">
+
+        <a class="social" href="#" data-social="discord" title="Discord">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M19.54 5.04A16.84 16.84 0 0 0 15.5 3.8l-.49 1.02a15.5 15.5 0 0 0-6.02 0L8.5 3.8c-1.4.24-2.75.65-4.04 1.24C1.9 9.08 1.2 13.03 1.55 16.92a16.7 16.7 0 0 0 4.98 2.52l1.2-1.63c-.65-.24-1.27-.54-1.86-.9l.45-.34c3.58 1.68 7.7 1.68 11.28 0l.45.34c-.59.36-1.21.66-1.86.9l1.2 1.63a16.7 16.7 0 0 0 4.98-2.52c.4-4.51-.68-8.42-2.83-11.88ZM8.45 15.1c-1.05 0-1.91-.96-1.91-2.13s.84-2.14 1.91-2.14 1.92.96 1.92 2.14-.86 2.13-1.92 2.13Zm7.1 0c-1.06 0-1.92-.96-1.92-2.13s.85-2.14 1.92-2.14 1.91.96 1.91 2.14-.85 2.13-1.91 2.13Z" />
+          </svg>
+          <span>DISCORD</span>
+        </a>
+
+        <a class="social store" href="https://chernobyl-z.tebex.store/" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 4h16l1.5 5H2.5L4 4Zm-.5 7h17v9h-17v-9Zm3 2v4h2v-4h-2Zm4 0v4h2v-4h-2Zm4 0v4h2v-4h-2Z" />
+          </svg>
+          <span>TIENDA</span>
+        </a>
+
+        <a class="social" href="#" data-social="youtube" title="YouTube">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M23.5 6.2a3 3 0 0 0-2.12-2.12C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.38.58A3 3 0 0 0 .5 6.2 31.3 31.3 0 0 0 0 12a31.3 31.3 0 0 0 .5 5.8 3 3 0 0 0 2.12 2.12C4.5 20.5 12 20.5 12 20.5s7.5 0 9.38-.58a3 3 0 0 0 2.12-2.12A31.3 31.3 0 0 0 24 12a31.3 31.3 0 0 0-.5-5.8ZM9.6 15.7V8.3l6.3 3.7-6.3 3.7Z" />
+          </svg>
+          <span>YOUTUBE</span>
+        </a>
+
+        <a class="social" href="#" data-social="tiktok" title="TikTok">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M15.4 3h3.1c.18 1.02.69 1.93 1.46 2.6.7.62 1.6 1.02 2.54 1.12v3.12a8.3 8.3 0 0 1-4-1.28v6.05A6.39 6.39 0 1 1 13 8.25v3.2a3.2 3.2 0 1 0 2.3 3.07V3Z" />
+          </svg>
+          <span>TIKTOK</span>
+        </a>
+
+        <a class="social" href="#" data-social="instagram" title="Instagram">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm5 3.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 0 1 12 7.5Zm0 2A2.5 2.5 0 1 0 14.5 12 2.5 2.5 0 0 0 12 9.5ZM17.5 6.25a1.25 1.25 0 1 1-1.25 1.25Z" />
+          </svg>
+          <span>INSTAGRAM</span>
+        </a>
+
+      </nav>
+
+      <div class="server-status">
+        <span class="server-dot"></span>
+        <strong id="playerCount">214</strong>
+        <span>EN LÍNEA</span>
+      </div>
+
+      <div class="profile">
+
+        <button class="profile-button" id="profileButton">
+
+          <svg class="avatar" viewBox="0 0 8 8" shape-rendering="crispEdges">
+            <rect width="8" height="2" fill="#6b4226" />
+            <rect y="2" width="8" height="6" fill="#c4836d" />
+            <rect x="0" y="2" width="1" height="6" fill="#6b4226" />
+            <rect x="7" y="2" width="1" height="6" fill="#6b4226" />
+            <rect x="1" y="3" width="2" height="1" fill="#3c2b1f" />
+            <rect x="5" y="3" width="2" height="1" fill="#3c2b1f" />
+            <rect x="3" y="4" width="2" height="1" fill="#b07865" />
+            <rect x="2" y="6" width="1" height="1" fill="#8b3232" />
+            <rect x="3" y="6" width="2" height="1" fill="#3c2b1f" />
+            <rect x="5" y="6" width="1" height="1" fill="#8b3232" />
+          </svg>
+
+          <div class="profile-info">
+            <span class="profile-name">Superviviente</span>
+            <span class="profile-label">PERFIL ▾</span>
+          </div>
+
+        </button>
+
+        <div class="profile-menu" id="profileMenu">
+          <div class="profile-option">Superviviente</div>
+          <div class="profile-option">+ Agregar perfil</div>
+          <div class="profile-option separator">Gestionar perfiles</div>
+        </div>
+
+      </div>
+
+    </header>
+
+
+    <!-- MAIN -->
+
+    <main>
+
+      <!-- NEWS -->
+
+      <aside class="news">
+
+        <div class="section-label">
+          ÚLTIMAS NOTICIAS
+        </div>
+
+        <article class="news-item featured changelog" data-type="update" data-date="15 ENE" data-tag="ACTUALIZACIÓN"
+          data-title="Zona Irradiada añadida al mapa"
+          data-description="Una nueva zona de alto riesgo se suma al mapa. Las oleadas nocturnas están activas y la radiación aumenta cuanto más tiempo permanezcas dentro.">
+          <div class="news-image"></div>
+
+          <div class="news-meta">
+            <span class="news-dot"></span>
+            <span class="news-date">15 ENE</span>
+            <span class="news-tag">NUEVO</span>
+          </div>
+
+          <h2 class="news-title">
+            Zona Irradiada añadida al mapa — oleadas nocturnas activas
+          </h2>
+        </article>
+
+
+        <article class="news-item changelog" data-type="fix" data-date="10 ENE" data-tag="HOTFIX"
+          data-title="Hotfix: spawn de zombies"
+          data-description="Ajustamos los puntos de aparición de zombies para evitar spawns dentro de determinadas zonas de base y mejorar la progresión durante las primeras horas.">
+          <div class="news-meta">
+            <span class="news-dot fix"></span>
+            <span class="news-date">10 ENE</span>
+            <span class="news-tag">HOTFIX</span>
+          </div>
+
+          <h2 class="news-title">
+            Hotfix spawn de zombies en zonas de base
+          </h2>
+        </article>
+
+
+        <article class="news-item changelog" data-type="update" data-date="02 ENE" data-tag="OPTIMIZACIÓN"
+          data-title="Modo FPS disponible"
+          data-description="Nueva configuración pensada para equipos de gama baja. Reduce efectos visuales y carga gráfica manteniendo la experiencia principal del modpack.">
+          <div class="news-meta">
+            <span class="news-dot"></span>
+            <span class="news-date">02 ENE</span>
+            <span class="news-tag">OPTIMIZACIÓN</span>
+          </div>
+
+          <h2 class="news-title">
+            Modo FPS disponible — optimización para PCs de gama baja
+          </h2>
+        </article>
+
+
+        <article class="news-item changelog" data-type="server" data-date="28 DIC" data-tag="SERVIDOR"
+          data-title="Mantenimiento programado"
+          data-description="El servidor permanecerá en mantenimiento durante la ventana indicada para aplicar tareas de infraestructura y comprobaciones del sistema.">
+          <div class="news-meta">
+            <span class="news-dot server"></span>
+            <span class="news-date">28 DIC</span>
+            <span class="news-tag">SERVIDOR</span>
+          </div>
+
+          <h2 class="news-title">
+            Mantenimiento — sábado 18 ene, 03:00 UTC
+          </h2>
+        </article>
+
+
+        <article class="news-item changelog" data-type="update" data-date="20 DIC" data-tag="ACTUALIZACIÓN"
+          data-title="Sistema de crafteo rediseñado"
+          data-description="El sistema de crafteo de refugios fue reorganizado para que las recetas sean más claras y el proceso de construcción resulte más directo.">
+          <div class="news-meta">
+            <span class="news-dot"></span>
+            <span class="news-date">20 DIC</span>
+            <span class="news-tag">ACTUALIZACIÓN</span>
+          </div>
+
+          <h2 class="news-title">
+            Sistema de crafteo de refugios rediseñado
+          </h2>
+        </article>
+
+      </aside>
+
+
+      <!-- HERO -->
+
+      <section class="hero">
+
+        <div class="hero-content">
+
+          <div class="eyebrow">
+            <span>●</span>
+            POST-APOCALIPSIS / MODPACK OFICIAL
+          </div>
+
+          <h1 class="title">
+            CHERNOBYL <span>Z</span>
+          </h1>
+
+          <div class="subtitle">
+            SURVIVE · SCAVENGE · ENDURE
+          </div>
+
+
+          <div class="play-section">
+
+            <div class="launch-label">
+              LAUNCH SEQUENCE
+            </div>
+
+            <div class="launch-controls">
+
+              <button class="play-button" id="playButton">
+                JUGAR
+              </button>
+
+              <div class="version">
+
+                <button class="version-button" id="versionButton">
+                  <span class="version-label">VERSIÓN</span>
+                  <span class="version-current" id="currentVersion">
+                    COMPLETA
+                  </span>
+                  <span class="version-arrow" id="versionArrow">
+                    ▾
+                  </span>
+                </button>
+
+                <div class="version-menu" id="versionMenu">
+
+                  <div class="version-option active" data-version="COMPLETA">
+                    <span class="option-name">COMPLETA</span>
+                    <span class="option-description">
+                      Todos los mods · ~4 GB RAM
+                    </span>
+                  </div>
+
+                  <div class="version-option" data-version="LITE">
+                    <span class="option-name">LITE</span>
+                    <span class="option-description">
+                      Mods esenciales · ~2 GB RAM
+                    </span>
+                  </div>
+
+                  <div class="version-option" data-version="FPS">
+                    <span class="option-name">FPS</span>
+                    <span class="option-description">
+                      Optimizado para gama baja
+                    </span>
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div class="build-info">
+              <span>v2.3.1</span>
+              <span>Forge 40.2.0</span>
+              <span>MC 1.18.2</span>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+
+    <!-- CHANGELOG MODAL -->
+
+    <div class="overlay" id="overlay">
+
+      <div class="modal">
+
+        <button class="modal-close" id="modalClose">
+          ×
+        </button>
+
+        <div class="modal-image"></div>
+
+        <div class="modal-content">
+
+          <div class="modal-meta">
+            <span class="modal-dot" id="modalDot"></span>
+            <span id="modalTag">ACTUALIZACIÓN</span>
+            <span>/</span>
+            <span id="modalDate">15 ENE</span>
+          </div>
+
+          <h2 class="modal-title" id="modalTitle">
+            Zona Irradiada añadida al mapa
+          </h2>
+
+          <p class="modal-description" id="modalDescription">
+          </p>
+
+          <div class="modal-footer">
+            CHERNOBYL Z · REGISTRO DE ACTUALIZACIÓN
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- FOOTER -->
+
+    <footer>
+
+      <span class="footer-status" id="status">
+        Listo para jugar
+      </span>
+
+      <div class="progress">
+        <div class="progress-fill" id="progress"></div>
+      </div>
+
+      <span class="percentage" id="percentage">
+        —
+      </span>
+
+      <span class="launcher-version">
+        LAUNCHER 1.4.2
+      </span>
+
+    </footer>
+
+  </div>
+
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+      const playButton = document.getElementById("playButton");
+      const progress = document.getElementById("progress");
+      const percentage = document.getElementById("percentage");
+      const status = document.getElementById("status");
+
+      const versionButton = document.getElementById("versionButton");
+      const versionMenu = document.getElementById("versionMenu");
+      const versionArrow = document.getElementById("versionArrow");
+      const currentVersion = document.getElementById("currentVersion");
+
+      const profileButton = document.getElementById("profileButton");
+      const profileMenu = document.getElementById("profileMenu");
+
+      const overlay = document.getElementById("overlay");
+      const modalClose = document.getElementById("modalClose");
+
+      const modalTitle = document.getElementById("modalTitle");
+      const modalDescription = document.getElementById("modalDescription");
+      const modalDate = document.getElementById("modalDate");
+      const modalTag = document.getElementById("modalTag");
+      const modalDot = document.getElementById("modalDot");
+
+      const playerCount = document.getElementById("playerCount");
+
+
+      /* =========================================================
+         LINKS
+      ========================================================= */
+
+      const SOCIAL_LINKS = {
+        discord: "TU_LINK_DE_DISCORD",
+        youtube: "TU_LINK_DE_YOUTUBE",
+        tiktok: "TU_LINK_DE_TIKTOK",
+        instagram: "TU_LINK_DE_INSTAGRAM"
+      };
+
+      document.querySelectorAll("[data-social]").forEach(link => {
+
+        link.addEventListener("click", event => {
+
+          event.preventDefault();
+
+          const key = link.dataset.social;
+          const url = SOCIAL_LINKS[key];
+
+          if (!url || url.startsWith("TU_")) {
+            status.textContent = `Configurar ${key.toUpperCase()}`;
+
+            setTimeout(() => {
+              status.textContent = "Listo para jugar";
+            }, 2000);
+
+            return;
+          }
+
+          window.open(url, "_blank", "noopener,noreferrer");
+        });
+
+      });
+
+
+      /* =========================================================
+         VERSION
+      ========================================================= */
+
+      versionButton.addEventListener("click", event => {
+
+        event.stopPropagation();
+
+        const opened = versionMenu.classList.toggle("open");
+
+        versionArrow.classList.toggle("open", opened);
+
+        profileMenu.classList.remove("open");
+      });
+
+
+      document.querySelectorAll(".version-option").forEach(option => {
+
+        option.addEventListener("click", () => {
+
+          document.querySelectorAll(".version-option")
+            .forEach(item => item.classList.remove("active"));
+
+          option.classList.add("active");
+
+          currentVersion.textContent = option.dataset.version;
+
+          versionMenu.classList.remove("open");
+          versionArrow.classList.remove("open");
+        });
+
+      });
+
+
+      /* =========================================================
+         PROFILE
+      ========================================================= */
+
+      profileButton.addEventListener("click", event => {
+
+        event.stopPropagation();
+
+        profileMenu.classList.toggle("open");
+
+        versionMenu.classList.remove("open");
+        versionArrow.classList.remove("open");
+      });
+
+
+      document.addEventListener("click", () => {
+
+        versionMenu.classList.remove("open");
+        versionArrow.classList.remove("open");
+
+        profileMenu.classList.remove("open");
+      });
+
+
+      /* =========================================================
+         CHANGELOG
+      ========================================================= */
+
+      const openChangelog = item => {
+
+        modalTitle.textContent = item.dataset.title;
+        modalDescription.textContent = item.dataset.description;
+        modalDate.textContent = item.dataset.date;
+        modalTag.textContent = item.dataset.tag;
+
+        modalDot.className = "modal-dot";
+
+        if (item.dataset.type === "fix") {
+          modalDot.classList.add("fix");
+        }
+
+        if (item.dataset.type === "server") {
+          modalDot.classList.add("server");
+        }
+
+        overlay.classList.add("open");
+      };
+
+
+      document.querySelectorAll(".changelog").forEach(item => {
+
+        item.addEventListener("click", () => {
+          openChangelog(item);
+        });
+
+        item.setAttribute("tabindex", "0");
+
+        item.addEventListener("keydown", event => {
+
+          if (event.key === "Enter" || event.key === " ") {
+
+            event.preventDefault();
+
+            openChangelog(item);
+          }
+
+        });
+
+      });
+
+
+      const closeModal = () => {
+        overlay.classList.remove("open");
+      };
+
+
+      modalClose.addEventListener("click", closeModal);
+
+
+      overlay.addEventListener("click", event => {
+
+        if (event.target === overlay) {
+          closeModal();
+        }
+
+      });
+
+
+      document.addEventListener("keydown", event => {
+
+        if (
+          event.key === "Escape" &&
+          overlay.classList.contains("open")
+        ) {
+          closeModal();
+        }
+
+      });
+
+
+      /* =========================================================
+         LAUNCH
+      ========================================================= */
+
+      const steps = [
+        [0, "Verificando archivos..."],
+        [25, "Cargando mods..."],
+        [52, "Inicializando Forge..."],
+        [78, "Conectando al servidor..."],
+        [100, "Listo para jugar"]
+      ];
+
+
+      playButton.addEventListener("click", () => {
+
+        if (playButton.disabled) return;
+
+        playButton.disabled = true;
+        playButton.textContent = "INICIANDO";
+
+        let index = 0;
+
+        const runStep = () => {
+
+          if (index >= steps.length) {
+
+            playButton.disabled = false;
+            playButton.textContent = "JUGAR";
+
+            status.textContent = "Listo para jugar";
+            percentage.textContent = "—";
+            progress.style.width = "100%";
+
+            return;
+          }
+
+          const [value, message] = steps[index++];
+
+          progress.style.width = `${value}%`;
+
+          percentage.textContent =
+            value > 0 && value < 100
+              ? `${value}%`
+              : "";
+
+          status.textContent = message;
+
+          setTimeout(
+            runStep,
+            650 + Math.random() * 350
+          );
+        };
+
+        runStep();
+      });
+
+
+      /* =========================================================
+         PLAYER COUNT
+      ========================================================= */
+
+      setInterval(() => {
+
+        const players =
+          200 + Math.floor(Math.random() * 30);
+
+        playerCount.textContent = players;
+
+      }, 6000);
+
+    });
+  </script>
+
+</body>
+
+</html>
