@@ -2,6 +2,7 @@
 using ChernobylZLauncher.Core.Mods;
 using ChernobylZLauncher.Core.Logging;
 using ChernobylZLauncher.Core.Auth;
+using ChernobylZLauncher.Core.Runtime;
 
 class Program
 {
@@ -44,6 +45,7 @@ class Program
 
         await modManager.SyncModsAsync(modsFolder, manifest, progress);
 
+        /*
         Console.WriteLine("\n=== Login Microsoft ===");
 
         var authService = new MicrosoftAuthService(log: log);
@@ -54,7 +56,30 @@ class Program
         Console.WriteLine("Esperando a que inicies sesion...");
 
         var msToken = await authService.PollForAccessTokenAsync(deviceCode);
-        Console.WriteLine($"Token recibido (primeros 20 caracteres): {msToken[..20]}...");
+
+        var (xblToken, xblHash) = await authService.AuthenticateWithXboxLiveAsync(msToken);
+        var (xstsToken, xstsHash) = await authService.AuthenticateWithXstsAsync(xblToken);
+        var mcToken = await authService.LoginWithMinecraftAsync(xstsToken, xstsHash);
+        var profile = await authService.GetMinecraftProfileAsync(mcToken);
+
+        Console.WriteLine($"\nJugador: {profile.Name}");
+        Console.WriteLine($"UUID: {profile.Id}");
+        */
+
+        Console.WriteLine("\n=== Java ===");
+
+        var javaService = new JavaService(log: log);
+        var javaInfo = await javaService.DetectSystemJavaAsync();
+
+        if (javaInfo.IsInstalled)
+        {
+            Console.WriteLine($"Version detectada: Java {javaInfo.MajorVersion}");
+            Console.WriteLine($"Compatible: {(javaInfo.IsCompatible ? "si" : "no, necesitamos descargar la correcta")}");
+        }
+        else
+        {
+            Console.WriteLine("No se encontro java instalado");
+        }
 
         Console.WriteLine("\n✅ Listo");
     }
