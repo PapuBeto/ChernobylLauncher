@@ -45,26 +45,24 @@ class Program
 
         await modManager.SyncModsAsync(modsFolder, manifest, progress);
 
-        /*
+    
         Console.WriteLine("\n=== Login Microsoft ===");
 
-        var authService = new MicrosoftAuthService(log: log);
-        var deviceCode = await authService.RequestDeviceCodeAsync();
+var authService = new MicrosoftAuthService(log: log);
+var tokenStore = new TokenStore(log: log);
+var sessionService = new AuthSessionService(authService, tokenStore, log);
 
-        Console.WriteLine($"Ve a: {deviceCode.VerificationUri}");
-        Console.WriteLine($"Y pon este codigo: {deviceCode.UserCode}");
-        Console.WriteLine("Esperando a que inicies sesion...");
+var session = await sessionService.LoginAsync(deviceCode =>
+{
+    Console.WriteLine($"Ve a: {deviceCode.VerificationUri}");
+    Console.WriteLine($"Y pon este codigo: {deviceCode.UserCode}");
+    Console.WriteLine("Esperando a que inicies sesion...");
+    return Task.CompletedTask;
+});
 
-        var msToken = await authService.PollForAccessTokenAsync(deviceCode);
-
-        var (xblToken, xblHash) = await authService.AuthenticateWithXboxLiveAsync(msToken);
-        var (xstsToken, xstsHash) = await authService.AuthenticateWithXstsAsync(xblToken);
-        var mcToken = await authService.LoginWithMinecraftAsync(xstsToken, xstsHash);
-        var profile = await authService.GetMinecraftProfileAsync(mcToken);
-
-        Console.WriteLine($"\nJugador: {profile.Name}");
-        Console.WriteLine($"UUID: {profile.Id}");
-        */
+Console.WriteLine($"\nJugador: {session.Profile.Name}");
+Console.WriteLine($"UUID: {session.Profile.Id}");
+    
 
         Console.WriteLine("\n=== Java ===");
 

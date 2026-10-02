@@ -122,6 +122,7 @@ public class JavaService
 
             process.Start();
 
+            // odio java, pero ni modo, sin el no hay minecraft
             // java manda la version por stderr, cosas de java
             var errorOutput = await process.StandardError.ReadToEndAsync();
             await process.WaitForExitAsync();
@@ -210,7 +211,7 @@ public class JavaService
                 }
             }
 
-            // 3) verificar que no llego corrupto
+            // 3) verificar que no llego corrupto (aqui rezamos para que el zip no venga roto)
             var downloadedHash = ComputeSha256(zipPath);
             if (!string.Equals(downloadedHash, expectedSha256, StringComparison.OrdinalIgnoreCase))
             {
@@ -279,6 +280,7 @@ public class JavaService
         var firstNumber = int.Parse(match.Groups[1].Value);
 
         // formato viejo tipo 1.8.0 (java 8) vs formato nuevo tipo 17.0.9 (java 17)
+        // quien decidio que java 8 se llamara 1.8, odio java
         if (firstNumber == 1 && match.Groups[2].Success)
         {
             return int.Parse(match.Groups[2].Value);
