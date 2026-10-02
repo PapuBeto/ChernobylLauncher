@@ -1,6 +1,7 @@
 ﻿using ChernobylZLauncher.Core.Server;
 using ChernobylZLauncher.Core.Mods;
 using ChernobylZLauncher.Core.Logging;
+using ChernobylZLauncher.Core.Auth;
 
 class Program
 {
@@ -42,6 +43,18 @@ class Program
             Console.WriteLine($"  {p.FileName}: {p.Percent:F0}%"));
 
         await modManager.SyncModsAsync(modsFolder, manifest, progress);
+
+        Console.WriteLine("\n=== Login Microsoft ===");
+
+        var authService = new MicrosoftAuthService(log: log);
+        var deviceCode = await authService.RequestDeviceCodeAsync();
+
+        Console.WriteLine($"Ve a: {deviceCode.VerificationUri}");
+        Console.WriteLine($"Y pon este codigo: {deviceCode.UserCode}");
+        Console.WriteLine("Esperando a que inicies sesion...");
+
+        var msToken = await authService.PollForAccessTokenAsync(deviceCode);
+        Console.WriteLine($"Token recibido (primeros 20 caracteres): {msToken[..20]}...");
 
         Console.WriteLine("\n✅ Listo");
     }

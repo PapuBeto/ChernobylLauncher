@@ -1233,7 +1233,7 @@
           <span>YOUTUBE</span>
         </a>
 
-        <a class="social" href="#" data-social="tiktok" title="TikTok">
+        <a class="social" href="https://www.tiktok.com/@fichuuut" target="_blank" rel="noopener" title="TikTok">
           <svg viewBox="0 0 24 24">
             <path
               d="M15.4 3h3.1c.18 1.02.69 1.93 1.46 2.6.7.62 1.6 1.02 2.54 1.12v3.12a8.3 8.3 0 0 1-4-1.28v6.05A6.39 6.39 0 1 1 13 8.25v3.2a3.2 3.2 0 1 0 2.3 3.07V3Z" />
@@ -1252,9 +1252,9 @@
       </nav>
 
       <div class="server-status">
-        <span class="server-dot"></span>
-        <strong id="playerCount">214</strong>
-        <span>EN LÍNEA</span>
+        <span class="server-dot" id="serverDot"></span>
+        <strong id="playerCount">—</strong>
+        <span id="serverStatusText">CONECTANDO...</span>
       </div>
 
       <div class="profile">
@@ -1570,7 +1570,6 @@
       const SOCIAL_LINKS = {
         discord: "TU_LINK_DE_DISCORD",
         youtube: "TU_LINK_DE_YOUTUBE",
-        tiktok: "TU_LINK_DE_TIKTOK",
         instagram: "TU_LINK_DE_INSTAGRAM"
       };
 
@@ -1791,17 +1790,28 @@
 
 
       /* =========================================================
-         PLAYER COUNT
+         SERVER STATUS (real, viene de C#)
       ========================================================= */
 
-      setInterval(() => {
+      window.updateServerStatus = function (isOnline, playersOnline) {
 
-        const players =
-          200 + Math.floor(Math.random() * 30);
+        const dot = document.getElementById("serverDot");
+        const text = document.getElementById("serverStatusText");
+        const count = document.getElementById("playerCount");
 
-        playerCount.textContent = players;
+        if (isOnline) {
+          dot.style.background = "var(--green)";
+          dot.style.boxShadow = "0 0 8px rgba(156, 255, 66, .5)";
+          text.textContent = "EN LÍNEA";
+          count.textContent = playersOnline;
+        } else {
+          dot.style.background = "#d96a4d";
+          dot.style.boxShadow = "none";
+          text.textContent = "SIN CONEXIÓN";
+          count.textContent = "—";
+        }
 
-      }, 6000);
+      };
 
     });
   </script>

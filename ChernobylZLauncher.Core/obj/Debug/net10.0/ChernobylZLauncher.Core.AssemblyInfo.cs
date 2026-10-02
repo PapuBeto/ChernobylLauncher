@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ChernobylZLauncher.Core")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d746a7d5d95aec3613cd8850a3ee6cab08ec9ab3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8f8446d76863c470251d580c0b8197b134700e68")]
 [assembly: System.Reflection.AssemblyProductAttribute("ChernobylZLauncher.Core")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ChernobylZLauncher.Core")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
