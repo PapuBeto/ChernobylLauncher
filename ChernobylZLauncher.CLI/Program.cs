@@ -69,18 +69,9 @@ class Program
         Console.WriteLine("\n=== Java ===");
 
         var javaService = new JavaService(log: log);
-        var javaInfo = await javaService.DetectSystemJavaAsync();
+        var runtimeFolder = Path.Combine(AppContext.BaseDirectory, "runtime");
+        var javaInfo = await javaService.EnsureJavaAsync(runtimeFolder);
 
-        if (javaInfo.IsInstalled)
-        {
-            Console.WriteLine($"Version detectada: Java {javaInfo.MajorVersion}");
-            Console.WriteLine($"Compatible: {(javaInfo.IsCompatible ? "si" : "no, necesitamos descargar la correcta")}");
-        }
-        else
-        {
-            Console.WriteLine("No se encontro java instalado");
-        }
-
-        Console.WriteLine("\n✅ Listo");
+        Console.WriteLine($"Java {javaInfo.MajorVersion} listo en: {javaInfo.Path}");
     }
 }
