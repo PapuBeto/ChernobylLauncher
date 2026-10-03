@@ -1,0 +1,11 @@
+{
+  "news": [
+    {
+      "type": "update",
+      "date": "02 OCT",
+      "tag": "NUEVO",
+      "title": "Sale la primera beta del launcher",
+      "description": "Ya puedes iniciar sesión, ajustar tu RAM y entrar al juego desde el launcher."
+    }
+  ]
+}
