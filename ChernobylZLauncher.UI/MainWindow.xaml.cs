@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using ChernobylZLauncher.Core.Auth;
 using ChernobylZLauncher.Core.Logging;
 using ChernobylZLauncher.Core.Minecraft;
@@ -31,6 +32,7 @@ public partial class MainWindow : Window
     private static readonly string GameRoot = Path.Combine(DataRoot, "minecraft");
     private static readonly string RuntimeRoot = Path.Combine(DataRoot, "runtime");
     private static readonly string LogFile = Path.Combine(DataRoot, "launcher.log");
+    private static readonly string WebViewData = Path.Combine(DataRoot, "webview");
 
     private readonly LauncherLogService _log = new();
     private readonly SettingsService _settingsService;
@@ -67,6 +69,14 @@ public partial class MainWindow : Window
                 Send(new { type = "log", level = entry.Level.ToString(), text = entry.Message });
         };
 
+        // al maximizar, el borde invisible se sale de la pantalla, asi que lo compensamos
+        StateChanged += (_, _) =>
+        {
+            var max = WindowState == WindowState.Maximized;
+            RootGrid.Margin = max ? new Thickness(8) : new Thickness(0);
+            Send(new { type = "windowState", maximized = max });
+        };
+
         Loaded += MainWindow_Loaded;
     }
 
@@ -74,7 +84,10 @@ public partial class MainWindow : Window
     {
         try
         {
-            await WebView.EnsureCoreWebView2Async();
+            // permitimos que la musica arranque sola, sin que el jugador tenga que dar click
+            var options = new CoreWebView2EnvironmentOptions("--autoplay-policy=no-user-gesture-required");
+            var env = await CoreWebView2Environment.CreateAsync(null, WebViewData, options);
+            await WebView.EnsureCoreWebView2Async(env);
 
             var launcherFolder = Path.Combine(AppContext.BaseDirectory, "launcher");
 
@@ -147,6 +160,31 @@ public partial class MainWindow : Window
                     // sesion guardada pero sin nombre: lo buscamos sin molestar al jugador
                     if (_tokenStore.Load() != null && string.IsNullOrEmpty(_settingsService.Load().LastPlayerName))
                         _ = FetchNameAsync();
+                    break;
+
+                // ---- botones y arrastre de la ventana ----
+                case "windowReady":
+                    Send(new { type = "windowState", maximized = WindowState == WindowState.Maximized });
+                    break;
+
+                case "minimize":
+                    WindowState = WindowState.Minimized;
+                    break;
+
+                case "toggleMaximize":
+                    WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+                    break;
+
+                case "closeWindow":
+                    Close();
+                    break;
+
+                case "dragWindow":
+                    // solo si el click sigue apretado y no esta maximizada
+                    if (WindowState == WindowState.Normal && Mouse.LeftButton == MouseButtonState.Pressed)
+                    {
+                        try { DragMove(); } catch { }
+                    }
                     break;
 
                 case "login":
