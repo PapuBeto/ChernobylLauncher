@@ -3,6 +3,7 @@ using ChernobylZLauncher.Core.Mods;
 using ChernobylZLauncher.Core.Logging;
 using ChernobylZLauncher.Core.Auth;
 using ChernobylZLauncher.Core.Runtime;
+using ChernobylZLauncher.Core.Minecraft;
 
 class Program
 {
@@ -45,31 +46,52 @@ class Program
 
         await modManager.SyncModsAsync(modsFolder, manifest, progress);
 
-    
         Console.WriteLine("\n=== Login Microsoft ===");
 
-var authService = new MicrosoftAuthService(log: log);
-var tokenStore = new TokenStore(log: log);
-var sessionService = new AuthSessionService(authService, tokenStore, log);
+        var authService = new MicrosoftAuthService(log: log);
+        var tokenStore = new TokenStore(log: log);
+        var sessionService = new AuthSessionService(authService, tokenStore, log);
 
-var session = await sessionService.LoginAsync(deviceCode =>
-{
-    Console.WriteLine($"Ve a: {deviceCode.VerificationUri}");
-    Console.WriteLine($"Y pon este codigo: {deviceCode.UserCode}");
-    Console.WriteLine("Esperando a que inicies sesion...");
-    return Task.CompletedTask;
-});
+        var session = await sessionService.LoginAsync(deviceCode =>
+        {
+            Console.WriteLine($"Ve a: {deviceCode.VerificationUri}");
+            Console.WriteLine($"Y pon este codigo: {deviceCode.UserCode}");
+            Console.WriteLine("Esperando a que inicies sesion...");
+            return Task.CompletedTask;
+        });
 
-Console.WriteLine($"\nJugador: {session.Profile.Name}");
-Console.WriteLine($"UUID: {session.Profile.Id}");
-    
+        Console.WriteLine($"\nJugador: {session.Profile.Name}");
+        Console.WriteLine($"UUID: {session.Profile.Id}");
 
         Console.WriteLine("\n=== Java ===");
 
         var javaService = new JavaService(log: log);
         var runtimeFolder = Path.Combine(AppContext.BaseDirectory, "runtime");
-        var javaInfo = await javaService.EnsureJavaAsync(runtimeFolder);
 
-        Console.WriteLine($"Java {javaInfo.MajorVersion} listo en: {javaInfo.Path}");
+        var javaProgress = new Progress<double>(p =>
+            Console.WriteLine($"  java 17: {p:F0}%"));
+
+        var javaInfo = await javaService.EnsureJavaAsync(runtimeFolder, javaProgress);
+
+        if (javaInfo.IsCompatible)
+        {
+            Console.WriteLine($"Java {javaInfo.MajorVersion} listo: {javaInfo.Path}");
+        }
+        else
+        {
+            Console.WriteLine("No se pudo conseguir java 17");
+        }
+
+        Console.WriteLine("\n=== Minecraft ===");
+
+        var minecraftFolder = Path.Combine(AppContext.BaseDirectory, "minecraft");
+        var installer = new MinecraftInstallerService(log: log);
+
+        var installProgress = new Progress<InstallProgress>(p =>
+            Console.WriteLine($"  {p.Stage}: {p.Done}/{p.Total}"));
+
+        await installer.InstallVanillaAsync(minecraftFolder, "1.20.1", installProgress);
+
+        Console.WriteLine("\n✅ Listo");
     }
 }
