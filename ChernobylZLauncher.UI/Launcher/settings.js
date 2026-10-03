@@ -37,6 +37,9 @@
     .cz-hint{margin-top:6px;color:var(--muted);font-size:10px}
     .cz-close{position:absolute;top:10px;right:12px;width:28px;height:28px;background:transparent;color:var(--muted);font-size:20px;cursor:pointer}
     .cz-close:hover{color:var(--text)}
+    .cz-cancel{display:none;height:22px;padding:0 10px;background:transparent;border:1px solid rgba(217,106,77,.45);color:#d96a4d;font-family:var(--mono);font-size:8px;letter-spacing:.1em;cursor:pointer}
+    .cz-cancel:hover{background:rgba(217,106,77,.1)}
+    .cz-cancel:disabled{opacity:.55;cursor:default}
   `;
   document.head.appendChild(style);
 
@@ -50,6 +53,7 @@
         <div class="cz-code" id="czCode"></div>
         <div class="cz-note" id="czCodeNote">Código copiado y navegador abierto. Pégalo ahí y regresa aquí.</div>
         <button class="cz-btn" id="czLoginBtn">INICIAR SESIÓN CON MICROSOFT</button>
+        <button class="cz-btn ghost" id="czLoginCancel" style="display:none;margin-top:10px">CANCELAR</button>
         <div class="cz-error" id="czLoginError"></div>
       </div>
     </div>
@@ -79,6 +83,13 @@
   `;
   document.body.appendChild(root);
 
+  // boton de cancelar en la barra de abajo, justo antes del porcentaje
+  const cancelBtn = document.createElement("button");
+  cancelBtn.className = "cz-cancel";
+  cancelBtn.id = "czCancel";
+  cancelBtn.textContent = "CANCELAR";
+  $("percentage").before(cancelBtn);
+
   // ---------- helpers ----------
   const open = id => $(id).classList.add("open");
   const close = id => $(id).classList.remove("open");
@@ -91,12 +102,19 @@
   };
 
   // el boton dice INSTALAR si falta minecraft/forge, y JUGAR si ya esta todo
+  // el de cancelar solo se ve mientras se instala (ya jugando no tiene caso)
   const setPlay = state => {
     const b = $("playButton");
     b.disabled = state !== "idle";
     if (state === "working") b.textContent = installed ? "INICIANDO" : "INSTALANDO";
     else if (state === "playing") b.textContent = "JUGANDO";
     else b.textContent = installed ? "JUGAR" : "INSTALAR";
+
+    cancelBtn.style.display = state === "working" ? "block" : "none";
+    if (state === "working") {
+      cancelBtn.disabled = false;
+      cancelBtn.textContent = "CANCELAR";
+    }
   };
 
   const setName = name => {
@@ -203,9 +221,13 @@
   // ---------- menu de perfil (lo reemplazamos entero) ----------
   $("profileMenu").innerHTML = `
     <div class="profile-option" id="czOptSettings">Configuración</div>
+    <div class="profile-option" id="czOptFolder">Abrir carpeta del juego</div>
+    <div class="profile-option" id="czOptLogs">Ver registro (logs)</div>
     <div class="profile-option separator" id="czOptLogout">Cerrar sesión</div>
   `;
   $("czOptSettings").addEventListener("click", () => open("czSettings"));
+  $("czOptFolder").addEventListener("click", () => send({ type: "openGameFolder" }));
+  $("czOptLogs").addEventListener("click", () => send({ type: "openLogs" }));
   $("czOptLogout").addEventListener("click", () => send({ type: "logout" }));
   $("czLogoutBtn").addEventListener("click", () => { close("czSettings"); send({ type: "logout" }); });
   $("czSettingsClose").addEventListener("click", () => close("czSettings"));
@@ -223,6 +245,15 @@
   $("czRam").addEventListener("change", saveSettings);
   $("czAuto").addEventListener("change", saveSettings);
 
+  // ---------- cancelar ----------
+  const doCancel = btn => {
+    btn.disabled = true;
+    btn.textContent = "CANCELANDO...";
+    send({ type: "cancel" });
+  };
+  cancelBtn.addEventListener("click", () => doCancel(cancelBtn));
+  $("czLoginCancel").addEventListener("click", () => doCancel($("czLoginCancel")));
+
   // ---------- login ----------
   $("czLoginBtn").addEventListener("click", () => {
     $("czLoginBtn").disabled = true;
@@ -236,6 +267,9 @@
     $("czLoginBtn").textContent = "INICIAR SESIÓN CON MICROSOFT";
     $("czCode").style.display = "none";
     $("czCodeNote").style.display = "none";
+    $("czLoginCancel").style.display = "none";
+    $("czLoginCancel").disabled = false;
+    $("czLoginCancel").textContent = "CANCELAR";
   };
 
   // ---------- jugar ----------
@@ -286,6 +320,7 @@
         $("czCodeNote").style.display = "block";
         $("czLoginBtn").disabled = true;
         $("czLoginBtn").textContent = "ESPERANDO...";
+        $("czLoginCancel").style.display = "block";
         break;
 
       case "loggedIn":
@@ -305,6 +340,13 @@
       case "loginFailed":
         resetLoginUi();
         $("czLoginError").textContent = m.message;
+        break;
+
+      case "cancelled":
+        resetLoginUi();
+        $("progress").style.width = "0%";
+        $("percentage").textContent = "";
+        setStatus("Cancelado", false);
         break;
 
       case "progress":

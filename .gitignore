@@ -16,3 +16,5 @@ obj/
 x64/
 x86/
 runtime/
+publish/
+*.zip

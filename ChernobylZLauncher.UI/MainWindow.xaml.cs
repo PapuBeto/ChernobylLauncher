@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using ChernobylZLauncher.Core.Auth;
@@ -38,6 +40,7 @@ public partial class MainWindow : Window
     private bool _busy;
     private bool _statusLoopStarted;
     private double _lastPercent;
+    private CancellationTokenSource? _cts;
 
     public MainWindow()
     {
@@ -150,6 +153,20 @@ public partial class MainWindow : Window
                     await DoLoginAsync();
                     break;
 
+                case "cancel":
+                    // sirve para la instalacion y para el login con codigo
+                    _cts?.Cancel();
+                    break;
+
+                case "openGameFolder":
+                    Directory.CreateDirectory(GameRoot);
+                    Process.Start(new ProcessStartInfo(GameRoot) { UseShellExecute = true });
+                    break;
+
+                case "openLogs":
+                    OpenLogs();
+                    break;
+
                 case "logout":
                     _tokenStore.Clear();
                     var s = _settingsService.Load();
@@ -175,8 +192,60 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             _log.Error($"se murio algo: {ex.Message}");
-            Send(new { type = "error", message = ex.Message });
+            Send(new { type = "error", message = FriendlyError(ex) });
         }
+    }
+
+    // ---------- carpetas y logs ----------
+
+    // abre el explorador con launcher.log seleccionado (se reinicia cada vez que abres el launcher)
+    private void OpenLogs()
+    {
+        if (File.Exists(LogFile))
+            Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{LogFile}\"") { UseShellExecute = true });
+        else
+            Process.Start(new ProcessStartInfo(DataRoot) { UseShellExecute = true });
+    }
+
+    // traduce los errores tecnicos a algo que el jugador entienda
+    private static string FriendlyError(Exception ex)
+    {
+        if (ex is AggregateException agg && agg.InnerException != null)
+            ex = agg.InnerException;
+
+        switch (ex)
+        {
+            case HttpRequestException:
+                return "No hay internet o el servidor de descargas no responde. Revisa tu conexión y vuelve a intentar.";
+            case TaskCanceledException:
+                return "La conexión tardó demasiado en responder, intenta otra vez.";
+            case UnauthorizedAccessException:
+                return "Windows no deja escribir en la carpeta del launcher. Cierra lo que la esté usando y reintenta.";
+            // 112 = disco lleno, 39 = disco lleno (handle)
+            case IOException io when (io.HResult & 0xFFFF) is 112 or 39:
+                return "Se acabó el espacio en el disco. Libera espacio y vuelve a intentar.";
+        }
+
+        return ex.Message;
+    }
+
+    // ---------- ventana mientras se juega ----------
+
+    // minimiza el launcher al abrir el juego y lo regresa al cerrarlo
+    private void SetWindowForGame(bool playing)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            if (playing)
+            {
+                WindowState = WindowState.Minimized;
+            }
+            else
+            {
+                WindowState = WindowState.Normal;
+                Activate();
+            }
+        });
     }
 
     // ---------- estado del server ----------
@@ -239,7 +308,7 @@ public partial class MainWindow : Window
 
     // ---------- login ----------
 
-    private async Task<AuthSession> LoginInternalAsync()
+    private async Task<AuthSession> LoginInternalAsync(CancellationToken ct = default)
     {
         var authService = new MicrosoftAuthService(log: _log);
         var sessionService = new AuthSessionService(authService, _tokenStore, _log);
@@ -260,14 +329,18 @@ public partial class MainWindow : Window
             try { Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true }); } catch { }
 
             return Task.CompletedTask;
-        });
+        }, ct);
     }
 
     private async Task DoLoginAsync()
     {
+        _cts?.Dispose();
+        _cts = new CancellationTokenSource();
+        var ct = _cts.Token;
+
         try
         {
-            var session = await LoginInternalAsync();
+            var session = await LoginInternalAsync(ct);
 
             var s = _settingsService.Load();
             s.LastPlayerName = session.Profile.Name;
@@ -275,10 +348,16 @@ public partial class MainWindow : Window
 
             Send(new { type = "loggedIn", name = session.Profile.Name });
         }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            _log.Warning("cancelaste el login, sin rollo");
+            Send(new { type = "cancelled" });
+            SendState();
+        }
         catch (Exception ex)
         {
             _log.Error($"fallo el login: {ex.Message}");
-            Send(new { type = "loginFailed", message = ex.Message });
+            Send(new { type = "loginFailed", message = FriendlyError(ex) });
         }
     }
 
@@ -328,6 +407,10 @@ public partial class MainWindow : Window
         _lastPercent = 0;
         Send(new { type = "playState", state = "working" });
 
+        _cts?.Dispose();
+        _cts = new CancellationTokenSource();
+        var ct = _cts.Token;
+
         try
         {
             var settings = _settingsService.Load();
@@ -336,6 +419,7 @@ public partial class MainWindow : Window
             Report(2, "Sincronizando mods...");
             var manifestUrl = $"https://raw.githubusercontent.com/PapuBeto/ChernobylLauncher/main/manifest/manifest.json?cachebust={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
             var manifest = await ModManifest.FromUrlAsync(manifestUrl);
+            ct.ThrowIfCancellationRequested();
 
             var modsFolder = Path.Combine(GameRoot, "mods");
             Directory.CreateDirectory(modsFolder);
@@ -343,11 +427,11 @@ public partial class MainWindow : Window
             var modManager = new ModManagerService(log: _log);
             var modsProgress = new Progress<(string FileName, double Percent)>(p =>
                 Report(2 + p.Percent * 0.13, $"Mod: {p.FileName}"));
-            await modManager.SyncModsAsync(modsFolder, manifest, modsProgress);
+            await modManager.SyncModsAsync(modsFolder, manifest, modsProgress, ct);
 
             // 2) sesion fresca (el token de minecraft caduca, asi que lo renovamos cada vez)
             Report(15, "Iniciando sesión...");
-            var session = await LoginInternalAsync();
+            var session = await LoginInternalAsync(ct);
 
             var s = _settingsService.Load();
             s.LastPlayerName = session.Profile.Name;
@@ -358,12 +442,13 @@ public partial class MainWindow : Window
             Report(18, "Revisando Java 17...");
             var javaService = new JavaService(log: _log);
             var javaProgress = new Progress<double>(p => Report(18 + p * 0.12, $"Java 17: {p:F0}%"));
-            var javaInfo = await javaService.EnsureJavaAsync(RuntimeRoot, javaProgress);
+            var javaInfo = await javaService.EnsureJavaAsync(RuntimeRoot, javaProgress, ct);
 
             if (!javaInfo.IsCompatible || string.IsNullOrEmpty(javaInfo.Path))
                 throw new InvalidOperationException("no se pudo conseguir java 17, sin eso no hay juego");
 
-            // 4) minecraft vanilla
+            // 4) minecraft vanilla (este paso todavia no se puede cortar a la mitad, solo entre pasos)
+            ct.ThrowIfCancellationRequested();
             Report(30, "Instalando Minecraft...");
             var installer = new MinecraftInstallerService(log: _log);
             var installProgress = new Progress<InstallProgress>(p =>
@@ -374,16 +459,21 @@ public partial class MainWindow : Window
             await installer.InstallVanillaAsync(GameRoot, McVersion, installProgress);
 
             // 5) forge
+            ct.ThrowIfCancellationRequested();
             Report(72, "Instalando Forge (tarda un rato)...");
             var forgeInstaller = new ForgeInstallerService(log: _log);
-            var forgeId = await forgeInstaller.InstallForgeAsync(GameRoot, javaInfo.Path, McVersion, ForgeVersion);
+            var forgeId = await forgeInstaller.InstallForgeAsync(GameRoot, javaInfo.Path, McVersion, ForgeVersion, ct);
 
             // ya quedo instalado, el boton cambia de INSTALAR a JUGAR
             Send(new { type = "installed" });
 
-            // 6) a jugar
+            // 6) a jugar (aqui ya no se cancela: el boton de cancelar se esconde)
+            ct.ThrowIfCancellationRequested();
             Report(95, "Arrancando Minecraft...");
             Send(new { type = "playState", state = "playing" });
+
+            // el launcher se va a la barra de tareas mientras dura el juego
+            SetWindowForGame(true);
 
             var launcher = new GameLauncherService(log: _log);
             var exitCode = await launcher.LaunchAsync(
@@ -397,6 +487,9 @@ public partial class MainWindow : Window
                 ramMb: settings.RamMb,
                 quickPlayServer: settings.AutoConnect ? $"{ServerHost}:{ServerPort}" : null);
 
+            // el juego ya se cerro, regresamos la ventana
+            SetWindowForGame(false);
+
             if (exitCode == 0)
             {
                 _lastPercent = 0;
@@ -404,16 +497,27 @@ public partial class MainWindow : Window
             }
             else
             {
-                Send(new { type = "error", message = $"el juego se cerró con código {exitCode}, revisa launcher.log" });
+                Send(new { type = "error", message = $"el juego se cerró con código {exitCode}, abre el registro desde el menú del perfil" });
             }
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            _log.Warning("cancelaste la instalacion, aqui no paso nada");
+            _lastPercent = 0;
+            Send(new { type = "cancelled" });
+            SendState();
         }
         catch (Exception ex)
         {
             _log.Error($"se murio algo: {ex.Message}");
-            Send(new { type = "error", message = ex.Message });
+            Send(new { type = "error", message = FriendlyError(ex) });
         }
         finally
         {
+            // por si el juego truena antes de llegar al paso de arriba, la ventana siempre regresa
+            if (WindowState == WindowState.Minimized)
+                SetWindowForGame(false);
+
             _busy = false;
             Send(new { type = "playState", state = "idle" });
         }

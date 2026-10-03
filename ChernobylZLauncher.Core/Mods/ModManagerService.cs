@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.Json;
 using ChernobylZLauncher.Core.Logging;
@@ -32,8 +33,82 @@ public class ModManagerService
         _log = log;
     }
 
+    // si el manifest trae un nombre chueco (con rutas, sin .jar) mejor tronamos de una vez
+    private static void ValidateManifest(ModManifest manifest)
+    {
+        foreach (var mod in manifest.Mods)
+        {
+            var name = mod.FileName;
+            if (string.IsNullOrWhiteSpace(name)
+                || name != Path.GetFileName(name)
+                || !name.EndsWith(".jar", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    $"el manifest trae un nombre de mod raro: '{name}'. tiene que ser solo el nombre del archivo y terminar en .jar");
+            }
+        }
+    }
+
+    // un jar es un zip, si no se puede abrir como zip forge se muere al arrancar
+    public static bool IsValidJar(string path)
+    {
+        try
+        {
+            using var zip = ZipFile.OpenRead(path);
+            return zip.Entries.Count > 0;
+        }
+        catch (InvalidDataException)
+        {
+            return false;
+        }
+        catch (IOException)
+        {
+            // archivo en uso o algo asi, no podemos saber, mejor no tocarlo
+            return true;
+        }
+    }
+
+    // los jar rotos se renombran a .jar.roto: forge solo carga *.jar, asi que ya no estorban
+    public List<string> QuarantineBrokenJars(string modsFolder)
+    {
+        var quarantined = new List<string>();
+        if (!Directory.Exists(modsFolder)) return quarantined;
+
+        foreach (var path in Directory.GetFiles(modsFolder, "*.jar"))
+        {
+            if (IsValidJar(path)) continue;
+
+            var name = Path.GetFileName(path);
+            try
+            {
+                File.Move(path, path + ".roto", overwrite: true);
+                quarantined.Add(name);
+                _log?.Warning($"{name} no es un jar de verdad, lo aparte como {name}.roto");
+            }
+            catch (Exception ex)
+            {
+                _log?.Warning($"no pude apartar {name}: {ex.Message}");
+            }
+        }
+
+        return quarantined;
+    }
+
+    // restos de descargas cortadas
+    private static void CleanTempFiles(string modsFolder)
+    {
+        if (!Directory.Exists(modsFolder)) return;
+
+        foreach (var tmp in Directory.GetFiles(modsFolder, "*.tmp"))
+        {
+            try { File.Delete(tmp); } catch { }
+        }
+    }
+
     public List<ModCheckResult> CheckMods(string modsFolder, ModManifest manifest)
     {
+        ValidateManifest(manifest);
+
         var results = new List<ModCheckResult>();
         Directory.CreateDirectory(modsFolder);
 
@@ -130,6 +205,15 @@ public class ModManagerService
                 $"El hash de '{mod.FileName}' no coincide con el esperado. Descarga corrupta o manifiesto desactualizado.");
         }
 
+        // el hash puede coincidir y aun asi no ser un jar (como el dummy que apuntaba a un README)
+        if (!IsValidJar(tempPath))
+        {
+            File.Delete(tempPath);
+            _log?.Error($"{mod.FileName} no es un jar de verdad");
+            throw new InvalidOperationException(
+                $"'{mod.FileName}' se descargo bien pero no es un jar valido. Revisa el downloadUrl de ese mod en el manifest.");
+        }
+
         if (File.Exists(destinationPath))
         {
             File.Delete(destinationPath);
@@ -145,6 +229,8 @@ public class ModManagerService
         IProgress<(string FileName, double Percent)>? progress = null,
         CancellationToken cancellationToken = default)
     {
+        CleanTempFiles(modsFolder);
+
         var checkResults = CheckMods(modsFolder, manifest);
 
         var toDownload = checkResults
@@ -154,6 +240,7 @@ public class ModManagerService
 
         foreach (var mod in toDownload)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var fileProgress = new Progress<double>(p => progress?.Report((mod.FileName, p)));
             await DownloadModAsync(modsFolder, mod, fileProgress, cancellationToken);
         }
@@ -168,6 +255,9 @@ public class ModManagerService
                 _log?.Info($"removido (ya no esta en el manifest): {mod.FileName}");
             }
         }
+
+        // ultima red de seguridad: ningun jar roto se queda en la carpeta
+        QuarantineBrokenJars(modsFolder);
 
         if (toDownload.Count == 0 && obsolete.Count == 0)
         {
