@@ -1,5 +1,5 @@
 {
-    "modpackVersion":  "1.0.0",
+    "modpackVersion":  "1.0.1",
     "mods":  [
                  {
                      "fileName":  "acceleratedrendering-1.0.14-1.20.1-alpha.jar",
@@ -56,6 +56,12 @@
                      "sizeBytes":  42115
                  },
                  {
+                     "fileName":  "Block-Jackpot-Casino-Machines-0.4.0.jar",
+                     "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/Block-Jackpot-Casino-Machines-0.4.0.jar",
+                     "sha256":  "b573bf3f5c9d4768f3cf22d15ac76dd93c4be9daf8e8c0a49204017b4bbd8d66",
+                     "sizeBytes":  1905741
+                 },
+                 {
                      "fileName":  "Blood-N_-Particles-v1.4.0-Forge-1.20.1.jar",
                      "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/Blood-N_-Particles-v1.4.0-Forge-1.20.1.jar",
                      "sha256":  "061f6f14e8e541f2cb7182b53cf2476127d418d01e43c444a3c29ed457d2296b",
@@ -72,6 +78,12 @@
                      "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/bocchium-1.20.1-0.0.3.jar",
                      "sha256":  "8cd971cc5774aed3b02b67810891837adc7e348c8a45be0590d28ea110fdb9fa",
                      "sizeBytes":  10201
+                 },
+                 {
+                     "fileName":  "CameraOverhaul-v2.1.1-forge_mc_1.20-1.20.5_.jar",
+                     "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/CameraOverhaul-v2.1.1-forge_mc_1.20-1.20.5_.jar",
+                     "sha256":  "af4f381a19c7ce39e019025955c2a9767b8b5c0d8b826d2975e60d9da466e492",
+                     "sizeBytes":  139793
                  },
                  {
                      "fileName":  "chloride-FORGE-mc1.20.1-v1.8.1.jar",
@@ -668,6 +680,12 @@
                      "sizeBytes":  256392
                  },
                  {
+                     "fileName":  "Resources1.0.5.jar",
+                     "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/Resources1.0.5.jar",
+                     "sha256":  "6ed605750d2d53f3a98eb62cad94789afe172bb5e7033cf2541c8d58d5dbd0a7",
+                     "sizeBytes":  667658
+                 },
+                 {
                      "fileName":  "rhino-forge-2001.2.3-build.10.jar",
                      "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/rhino-forge-2001.2.3-build.10.jar",
                      "sha256":  "fed2211429301bf043864183cab9ab8e92d4cc4dbb9e488ce6c75217c54584a6",
@@ -684,6 +702,12 @@
                      "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/Searchables-forge-1.20.1-1.0.3.jar",
                      "sha256":  "c1a76e93886210574d3f298c0461241fb711e52ac22c7a04d3236840f29e6576",
                      "sizeBytes":  77732
+                 },
+                 {
+                     "fileName":  "SecurityCraft-v1.10.2.1.jar",
+                     "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/SecurityCraft-v1.10.2.1.jar",
+                     "sha256":  "f7c637b291cccd2c4a4f94048a6d08a48065c0618fec03043d6f9e15af27948a",
+                     "sizeBytes":  4995865
                  },
                  {
                      "fileName":  "SecurityDoor-1.0.0.jar",
@@ -732,6 +756,12 @@
                      "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/spiffyhud_forge_3.1.2_MC_1.20.1.jar",
                      "sha256":  "595fa7d1f2b1efcd77884a2df9ad68523bbd3bdc6401f0d3b27725ea19d25d33",
                      "sizeBytes":  836930
+                 },
+                 {
+                     "fileName":  "StackableItems-forge-1.20._0-1_-v1.2.jar",
+                     "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/StackableItems-forge-1.20._0-1_-v1.2.jar",
+                     "sha256":  "bfa816be694fbba649863e97bab05397af32e78657468746f3a3d647f5d191aa",
+                     "sizeBytes":  81493
                  },
                  {
                      "fileName":  "tacz_optimization-1.0.2.jar",
@@ -818,6 +848,12 @@
                      "sizeBytes":  169451
                  },
                  {
+                     "fileName":  "wegotrunnners-0.7.1.1.20.1_SPANISH-TRANSLATION-UPDATE_.jar",
+                     "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/wegotrunnners-0.7.1.1.20.1_SPANISH-TRANSLATION-UPDATE_.jar",
+                     "sha256":  "2199e88400583fd107cbfe09881d38a561c91b440d34b316029670b51ebbcd55",
+                     "sizeBytes":  160024
+                 },
+                 {
                      "fileName":  "whywhere-0.1.0.jar",
                      "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/whywhere-0.1.0.jar",
                      "sha256":  "d384813f7ab28765897322876b8c0a5b069e222a8f81e9926c3da9c0ed8e39c4",
@@ -852,6 +888,12 @@
                      "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/zombieawareness-1.20.1-1.13.1.jar",
                      "sha256":  "4f5104f7d29e1d065364d2483885f3751da2bef09a734cead2fce81c82c46586",
                      "sizeBytes":  291139
+                 },
+                 {
+                     "fileName":  "zombies_plus-2.1.2-1.20-.4_excl.3_-_forge-fabric_.jar",
+                     "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/zombies_plus-2.1.2-1.20-.4_excl.3_-_forge-fabric_.jar",
+                     "sha256":  "1aa6b95b2036f754f2910f5026eb16df8a6fd16a1b24d489c1592bb1277dcf0c",
+                     "sizeBytes":  624117
                  }
              ]
 }
