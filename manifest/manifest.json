@@ -1,5 +1,5 @@
 {
-    "modpackVersion":  "1.0.1",
+    "modpackVersion":  "1.0.2",
     "mods":  [
                  {
                      "fileName":  "acceleratedrendering-1.0.14-1.20.1-alpha.jar",
@@ -668,6 +668,12 @@
                      "sizeBytes":  31326485
                  },
                  {
+                     "fileName":  "RaidBlock_v14.jar",
+                     "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/RaidBlock_v14.jar",
+                     "sha256":  "fb3f3467bbbeb0321359b56f355a65f3f97f1330568eca5372beb8bd079c1539",
+                     "sizeBytes":  52470237
+                 },
+                 {
                      "fileName":  "RaidBlockV13.jar",
                      "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/RaidBlockV13.jar",
                      "sha256":  "4e1a127daafa1858c5123d538b28ae41eb3f9335bbd538851bb3564eb194a452",
@@ -830,6 +836,12 @@
                      "sizeBytes":  736109
                  },
                  {
+                     "fileName":  "VIP_Capes-1.1.jar",
+                     "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/VIP_Capes-1.1.jar",
+                     "sha256":  "3f328c4c554b3109129d886723b77afeb9c1c4efc922c12ee1b7c88dd9363bdf",
+                     "sizeBytes":  649460
+                 },
+                 {
                      "fileName":  "voicechat-forge-1.20.1-2.6.22.jar",
                      "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/voicechat-forge-1.20.1-2.6.22.jar",
                      "sha256":  "f171e99fa99f007ef013af5306f6c490fe79a11be7e1b18940147d75ced045b9",
@@ -876,6 +888,12 @@
                      "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/xaeroworldmap-forge-1.20.1-1.46.0.jar",
                      "sha256":  "e00bd87a949cfa8c31d571f4d9646db038e3b98f8cdbb7bd217f3fb9c3780c9e",
                      "sizeBytes":  1425022
+                 },
+                 {
+                     "fileName":  "youdied-1.0.0.jar",
+                     "downloadUrl":  "https://github.com/PapuBeto/ChernobylLauncher/releases/download/mods/youdied-1.0.0.jar",
+                     "sha256":  "650b26d0b7313824bfc6af810d3e0c48009e3b72fdf14f4adc18a95c3c3a2854",
+                     "sizeBytes":  56423
                  },
                  {
                      "fileName":  "Zcraft_Decorations-1.0.1.jar",
