@@ -110,4 +110,11 @@
   }
 
   send({ type: "windowReady" });
+
+  // ---------- pestaña de skins ----------
+  // la cargamos aqui, hasta el final, para no tener que tocar el launcher.html
+  // (un archivo menos donde equivocarse, y ya van como 3 jaja)
+  const skinsScript = document.createElement("script");
+  skinsScript.src = "skins.js";
+  document.body.appendChild(skinsScript);
 })();

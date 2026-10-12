@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,6 +34,9 @@ public partial class MainWindow : Window
     private static readonly string RuntimeRoot = Path.Combine(DataRoot, "runtime");
     private static readonly string LogFile = Path.Combine(DataRoot, "launcher.log");
     private static readonly string WebViewData = Path.Combine(DataRoot, "webview");
+
+    // un solo HttpClient para las skins (crear uno por cada peticion es mala idea, creeme)
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(30) };
 
     private readonly LauncherLogService _log = new();
     private readonly SettingsService _settingsService;
@@ -89,6 +93,36 @@ public partial class MainWindow : Window
             var env = await CoreWebView2Environment.CreateAsync(null, WebViewData, options);
             await WebView.EnsureCoreWebView2Async(env);
 
+            // ---- quitamos lo que hace que el launcher parezca una pagina web ----
+            // (clic derecho con "Recargar", la barrita de abajo, el zoom, etc.)
+            var cfg = WebView.CoreWebView2.Settings;
+            cfg.AreDefaultContextMenusEnabled = false;   // adios menu del clic derecho
+            cfg.IsStatusBarEnabled = false;              // la barrita que sale abajo con el link
+            cfg.IsZoomControlEnabled = false;            // que no se pueda hacer zoom con ctrl + rueda
+            cfg.IsSwipeNavigationEnabled = false;        // por si alguien tiene pantalla tactil
+
+#if !DEBUG
+            // en la version final tampoco dejamos F5, Ctrl+R, F12, etc.
+            // si lo dejamos en debug es para que tu si puedas depurar (con F12 abres la consola)
+            cfg.AreBrowserAcceleratorKeysEnabled = false;
+            cfg.AreDevToolsEnabled = false;
+#endif
+
+            // ---- links externos ----
+            // por defecto los target="_blank" abren una ventanita rara dentro del launcher,
+            // asi que los mandamos al navegador de verdad (chrome, edge, lo que tenga el jugador)
+            WebView.CoreWebView2.NewWindowRequested += (_, args) =>
+            {
+                args.Handled = true; // le decimos que NO abra su popup
+
+                // solo dejamos pasar http y https, nada de abrir cosas raras en el pc del jugador
+                if (Uri.TryCreate(args.Uri, UriKind.Absolute, out var url) &&
+                    (url.Scheme == Uri.UriSchemeHttps || url.Scheme == Uri.UriSchemeHttp))
+                {
+                    try { Process.Start(new ProcessStartInfo(url.AbsoluteUri) { UseShellExecute = true }); } catch { }
+                }
+            };
+
             var launcherFolder = Path.Combine(AppContext.BaseDirectory, "launcher");
 
             if (!Directory.Exists(launcherFolder))
@@ -132,6 +166,7 @@ public partial class MainWindow : Window
             string? type;
             int ramMb = 0;
             bool autoConnect = false;
+            string? skinVariant = null, skinData = null, lookupName = null;
 
             using (var doc = JsonDocument.Parse(e.WebMessageAsJson))
             {
@@ -143,6 +178,16 @@ public partial class MainWindow : Window
                     ramMb = root.GetProperty("ramMb").GetInt32();
                     autoConnect = root.GetProperty("autoConnect").GetBoolean();
                 }
+
+                // lo de las skins tambien se lee aqui adentro, porque el doc se cierra al salir
+                if (type == "applySkin")
+                {
+                    skinVariant = root.GetProperty("variant").GetString();
+                    skinData = root.GetProperty("data").GetString();
+                }
+
+                if (type == "lookupSkin")
+                    lookupName = root.GetProperty("name").GetString();
             }
 
             switch (type)
@@ -157,8 +202,10 @@ public partial class MainWindow : Window
                         _ = ServerStatusLoopAsync();
                     }
 
-                    // sesion guardada pero sin nombre: lo buscamos sin molestar al jugador
-                    if (_tokenStore.Load() != null && string.IsNullOrEmpty(_settingsService.Load().LastPlayerName))
+                    // sesion guardada pero sin nombre (o sin uuid, que es para la skin): lo buscamos sin molestar al jugador
+                    var saved = _settingsService.Load();
+                    if (_tokenStore.Load() != null &&
+                        (string.IsNullOrEmpty(saved.LastPlayerName) || string.IsNullOrEmpty(saved.LastPlayerUuid)))
                         _ = FetchNameAsync();
                     break;
 
@@ -209,6 +256,7 @@ public partial class MainWindow : Window
                     _tokenStore.Clear();
                     var s = _settingsService.Load();
                     s.LastPlayerName = string.Empty;
+                    s.LastPlayerUuid = string.Empty;
                     _settingsService.Save(s);
                     _log.Success("sesion cerrada, la proxima vez te pide codigo otra vez");
                     Send(new { type = "loggedOut" });
@@ -220,6 +268,19 @@ public partial class MainWindow : Window
                     cfg.AutoConnect = autoConnect;
                     _settingsService.Save(cfg);
                     SendState();
+                    break;
+
+                // ---- skins ----
+                case "getSkin":
+                    await SendCurrentSkinAsync();
+                    break;
+
+                case "applySkin":
+                    await ApplySkinAsync(skinVariant, skinData);
+                    break;
+
+                case "lookupSkin":
+                    await LookupSkinAsync(lookupName);
                     break;
 
                 case "play":
@@ -334,6 +395,7 @@ public partial class MainWindow : Window
             type = "state",
             loggedIn = _tokenStore.Load() != null,
             playerName = s.LastPlayerName,
+            playerUuid = s.LastPlayerUuid,
             installed = IsInstalled(),
             ramMb = s.RamMb,
             minRam = SettingsService.MinRamMb,
@@ -382,9 +444,10 @@ public partial class MainWindow : Window
 
             var s = _settingsService.Load();
             s.LastPlayerName = session.Profile.Name;
+            s.LastPlayerUuid = session.Profile.Id.ToString(); // para la cabeza de la skin
             _settingsService.Save(s);
 
-            Send(new { type = "loggedIn", name = session.Profile.Name });
+            Send(new { type = "loggedIn", name = session.Profile.Name, uuid = session.Profile.Id.ToString() });
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -415,9 +478,10 @@ public partial class MainWindow : Window
 
             var s = _settingsService.Load();
             s.LastPlayerName = session.Profile.Name;
+            s.LastPlayerUuid = session.Profile.Id.ToString(); // para la cabeza de la skin
             _settingsService.Save(s);
 
-            Send(new { type = "loggedIn", name = session.Profile.Name });
+            Send(new { type = "loggedIn", name = session.Profile.Name, uuid = session.Profile.Id.ToString() });
         }
         catch (Exception ex)
         {
@@ -426,6 +490,190 @@ public partial class MainWindow : Window
             // AuthSessionService borra el token si ya no servia, entonces toca login de nuevo
             if (_tokenStore.Load() == null)
                 Send(new { type = "loggedOut" });
+        }
+    }
+
+    // ---------- skins ----------
+
+    // saca la sesion guardada sin abrir navegador ni pedir codigo
+    // si ya vencio devuelve null y listo, que el jugador inicie sesion normal
+    private async Task<AuthSession?> GetSessionSilentAsync()
+    {
+        try
+        {
+            var authService = new MicrosoftAuthService(log: _log);
+            var sessionService = new AuthSessionService(authService, _tokenStore, _log);
+
+            return await sessionService.LoginAsync(
+                _ => throw new InvalidOperationException("la sesion guardada ya vencio"));
+        }
+        catch (Exception ex)
+        {
+            _log.Warning($"no pude sacar la sesion para las skins: {ex.Message}");
+            return null;
+        }
+    }
+
+    // le pide a mojang la skin que tienes puesta y se la manda al html (ya descargada, en base64)
+    private async Task SendCurrentSkinAsync()
+    {
+        var session = await GetSessionSilentAsync();
+        if (session == null)
+        {
+            Send(new { type = "skinError", message = "Inicia sesión para ver y cambiar tu skin." });
+            return;
+        }
+
+        try
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Get, "https://api.minecraftservices.com/minecraft/profile");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", $"{session.MinecraftToken}");
+            using var res = await Http.SendAsync(req);
+            res.EnsureSuccessStatusCode();
+
+            using var doc = JsonDocument.Parse(await res.Content.ReadAsStringAsync());
+
+            // buscamos la skin que esta ACTIVE (puede haber mas guardadas en la cuenta)
+            if (doc.RootElement.TryGetProperty("skins", out var skins))
+            {
+                foreach (var skin in skins.EnumerateArray())
+                {
+                    if (skin.GetProperty("state").GetString() != "ACTIVE") continue;
+
+                    var url = skin.GetProperty("url").GetString();
+                    var slim = skin.TryGetProperty("variant", out var v) &&
+                               string.Equals(v.GetString(), "SLIM", StringComparison.OrdinalIgnoreCase);
+
+                    var png = await Http.GetByteArrayAsync(url);
+                    Send(new { type = "currentSkin", variant = slim ? "slim" : "classic", data = Convert.ToBase64String(png) });
+                    return;
+                }
+            }
+
+            // cuenta sin skin propia (usa la de por defecto)
+            Send(new { type = "currentSkin", variant = "classic", data = (string?)null });
+        }
+        catch (Exception ex)
+        {
+            _log.Warning($"no pude bajar tu skin: {ex.Message}");
+            Send(new { type = "skinError", message = FriendlyError(ex) });
+        }
+    }
+
+    // sube la skin a la cuenta de mojang (esto es lo mismo que hace minecraft.net)
+    private async Task ApplySkinAsync(string? variant, string? base64)
+    {
+        try
+        {
+            var v = variant == "slim" ? "slim" : "classic";
+
+            if (string.IsNullOrEmpty(base64))
+                throw new InvalidOperationException("no llegó la imagen de la skin");
+
+            var png = Convert.FromBase64String(base64);
+
+            // chequeo rapido antes de molestar a mojang: que sea png y mida 64x64 o 64x32
+            if (png.Length < 33 || png.Length > 200_000 ||
+                png[0] != 0x89 || png[1] != 0x50 || png[2] != 0x4E || png[3] != 0x47)
+                throw new InvalidOperationException("esa imagen no es un PNG válido");
+
+            // el ancho y el alto estan guardados en bytes fijos del png (odio los formatos binarios)
+            var w = (png[16] << 24) | (png[17] << 16) | (png[18] << 8) | png[19];
+            var h = (png[20] << 24) | (png[21] << 16) | (png[22] << 8) | png[23];
+            if (w != 64 || (h != 64 && h != 32))
+                throw new InvalidOperationException($"la skin tiene que medir 64x64 (o 64x32), la tuya mide {w}x{h}");
+
+            var session = await GetSessionSilentAsync();
+            if (session == null)
+                throw new InvalidOperationException("tu sesión venció, cierra sesión y vuelve a entrar");
+
+            using var form = new MultipartFormDataContent();
+            form.Add(new StringContent(v), "variant");
+
+            var file = new ByteArrayContent(png);
+            file.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+            form.Add(file, "file", "skin.png");
+
+            using var req = new HttpRequestMessage(HttpMethod.Post, "https://api.minecraftservices.com/minecraft/profile/skins")
+            {
+                Content = form
+            };
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", $"{session.MinecraftToken}");
+
+            using var res = await Http.SendAsync(req);
+
+            if (!res.IsSuccessStatusCode)
+            {
+                var code = (int)res.StatusCode;
+                throw new InvalidOperationException(code switch
+                {
+                    429 => "Mojang dice que cambias la skin muy seguido, espera un ratito y reintenta",
+                    401 or 403 => "Mojang no aceptó tu sesión, cierra sesión y vuelve a entrar",
+                    _ => $"Mojang rechazó la skin (error {code})"
+                });
+            }
+
+            _log.Success("skin cambiada");
+            Send(new { type = "skinApplied", variant = v, data = base64 });
+        }
+        catch (Exception ex)
+        {
+            _log.Warning($"no se pudo cambiar la skin: {ex.Message}");
+            Send(new { type = "skinError", message = FriendlyError(ex) });
+        }
+    }
+
+    // busca la skin de cualquier jugador por su nombre (nombre -> uuid -> textura -> png)
+    private async Task LookupSkinAsync(string? name)
+    {
+        try
+        {
+            name = (name ?? "").Trim();
+            if (!System.Text.RegularExpressions.Regex.IsMatch(name, "^[A-Za-z0-9_]{3,16}$"))
+                throw new InvalidOperationException("ese nombre no parece de Minecraft (3 a 16 letras, números o _)");
+
+            // 1) nombre -> uuid
+            using var r1 = await Http.GetAsync($"https://api.mojang.com/users/profiles/minecraft/{name}");
+            if (r1.StatusCode == System.Net.HttpStatusCode.NotFound || r1.StatusCode == System.Net.HttpStatusCode.NoContent)
+                throw new InvalidOperationException("no existe ningún jugador con ese nombre");
+            r1.EnsureSuccessStatusCode();
+
+            using var d1 = JsonDocument.Parse(await r1.Content.ReadAsStringAsync());
+            var id = d1.RootElement.GetProperty("id").GetString();
+            var realName = d1.RootElement.GetProperty("name").GetString() ?? name;
+
+            // 2) uuid -> perfil, que trae la textura escondida en base64
+            using var r2 = await Http.GetAsync($"https://sessionserver.mojang.com/session/minecraft/profile/{id}");
+            r2.EnsureSuccessStatusCode();
+
+            using var d2 = JsonDocument.Parse(await r2.Content.ReadAsStringAsync());
+            string? texturesB64 = null;
+            foreach (var prop in d2.RootElement.GetProperty("properties").EnumerateArray())
+            {
+                if (prop.GetProperty("name").GetString() == "textures")
+                    texturesB64 = prop.GetProperty("value").GetString();
+            }
+
+            if (texturesB64 == null)
+                throw new InvalidOperationException("ese jugador no tiene skin");
+
+            using var d3 = JsonDocument.Parse(Convert.FromBase64String(texturesB64));
+            if (!d3.RootElement.GetProperty("textures").TryGetProperty("SKIN", out var skin))
+                throw new InvalidOperationException("ese jugador usa la skin por defecto, no hay nada que copiar");
+
+            var url = skin.GetProperty("url").GetString();
+            var slim = skin.TryGetProperty("metadata", out var meta) &&
+                       meta.TryGetProperty("model", out var model) &&
+                       model.GetString() == "slim";
+
+            // 3) bajamos el png
+            var png = await Http.GetByteArrayAsync(url);
+            Send(new { type = "skinLookup", name = realName, variant = slim ? "slim" : "classic", data = Convert.ToBase64String(png) });
+        }
+        catch (Exception ex)
+        {
+            _log.Warning($"no pude buscar esa skin: {ex.Message}");
+            Send(new { type = "skinError", message = FriendlyError(ex) });
         }
     }
 
@@ -473,8 +721,9 @@ public partial class MainWindow : Window
 
             var s = _settingsService.Load();
             s.LastPlayerName = session.Profile.Name;
+            s.LastPlayerUuid = session.Profile.Id.ToString(); // para la cabeza de la skin
             _settingsService.Save(s);
-            Send(new { type = "loggedIn", name = session.Profile.Name });
+            Send(new { type = "loggedIn", name = session.Profile.Name, uuid = session.Profile.Id.ToString() });
 
             // 3) java
             Report(18, "Revisando Java 17...");

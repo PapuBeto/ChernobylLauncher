@@ -117,8 +117,54 @@
     }
   };
 
-  const setName = name => {
+  // ---------- skin del jugador (la cabecita al lado del nombre) ----------
+  // el dibujito que viene en el html es el de mentiritas: lo dejamos escondido
+  // y solo lo mostramos si no hay sesion o si no se pudo bajar la skin
+  const svgAvatar = document.querySelector(".profile-button .avatar");
+  const headImg = document.createElement("img");
+  headImg.className = "avatar"; // asi hereda el tamaño y el pixelado del css de siempre
+  headImg.alt = "";
+  headImg.style.display = "none";
+  svgAvatar.after(headImg);
+
+  // de donde sacamos la cabeza (usa el uuid). si el primero se cae, probamos el segundo
+  // si se caen los dos (odio las paginas de terceros) se queda el dibujito de siempre
+  const HEAD_SOURCES = [
+    id => `https://mc-heads.net/avatar/${id}/64`,
+    id => `https://crafatar.com/avatars/${id}?size=64&overlay`
+  ];
+  let headTry = 0;
+  let headId = "";
+
+  const showDefaultHead = () => {
+    headImg.style.display = "none";
+    svgAvatar.style.display = "";
+  };
+
+  headImg.addEventListener("load", () => {
+    headImg.style.display = "";
+    svgAvatar.style.display = "none";
+  });
+
+  headImg.addEventListener("error", () => {
+    headTry++;
+    if (headTry < HEAD_SOURCES.length) headImg.src = HEAD_SOURCES[headTry](headId);
+    else showDefaultHead();
+  });
+
+  const setHead = uuid => {
+    const id = (uuid || "").replace(/-/g, ""); // sin guiones, que algunas paginas se ponen chillonas
+    if (!id) { headId = ""; showDefaultHead(); return; }
+    if (id === headId) return; // ya la tenemos puesta, no la volvemos a bajar
+    headId = id;
+    headTry = 0;
+    headImg.src = HEAD_SOURCES[0](id);
+  };
+
+  // nombre + cabeza juntos, asi nunca se desincronizan
+  const setName = (name, uuid) => {
     document.querySelector(".profile-name").textContent = name || "Sin sesión";
+    setHead(name ? uuid : "");
   };
 
   const ramText = mb => `${(mb / 1024).toFixed(1)} GB (${mb} MB)`;
@@ -289,7 +335,8 @@
       case "state":
         loggedIn = m.loggedIn;
         installed = m.installed;
-        setName(m.loggedIn ? (m.playerName || "Cargando...") : "");
+        // le pasamos tambien el uuid para que salga la cabeza de la skin
+        setName(m.loggedIn ? (m.playerName || "Cargando...") : "", m.loggedIn ? m.playerUuid : "");
         $("czRam").min = m.minRam;
         $("czRam").max = m.maxRam;
         $("czRam").value = m.ramMb;
@@ -325,7 +372,7 @@
 
       case "loggedIn":
         loggedIn = true;
-        setName(m.name);
+        setName(m.name, m.uuid);
         resetLoginUi();
         close("czLogin");
         break;

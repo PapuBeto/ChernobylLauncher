@@ -9,6 +9,9 @@ public class LauncherSettings
     public int RamMb { get; set; } = 4096;
     public bool AutoConnect { get; set; } = true;
     public string LastPlayerName { get; set; } = string.Empty;
+
+    // el uuid de la cuenta, con esto sacamos la cabeza de la skin (odio los uuid)
+    public string LastPlayerUuid { get; set; } = string.Empty;
 }
 
 // guarda y lee settings.json en %AppData%\ChernobylZLauncher\ (junto a session.dat)
