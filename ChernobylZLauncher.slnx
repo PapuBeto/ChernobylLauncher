@@ -2,4 +2,5 @@
   <Project Path="ChernobylZLauncher.CLI/ChernobylZLauncher.CLI.csproj" />
   <Project Path="ChernobylZLauncher.Core/ChernobylZLauncher.Core.csproj" />
   <Project Path="ChernobylZLauncher.UI/ChernobylZLauncher.UI.csproj" />
+  <Project Path="ChernobylZLauncher.Updater/ChernobylZLauncher.Updater.csproj" />
 </Solution>
